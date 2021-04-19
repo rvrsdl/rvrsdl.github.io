@@ -1,1 +1,30 @@
-Under construction
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NeuralNetImages</title>
+    <style>
+    p {
+        color: white;
+        text-align: center;
+        font-family: "Lucida Console", "Courier New", monospace;
+    }
+    .flex-container {
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: center;
+    }
+    </style>
+</head>
+<body style="background: black;">
+    <div class="flex-container">
+        <canvas id="canvas1" style="margin:0.5em; padding: 0em;"></canvas>
+        <canvas id="canvas2" style="margin:0.5em; padding: 0em;"></canvas>
+        <canvas id="canvas3" style="margin:0.5em; padding: 0em;"></canvas>
+        <canvas id="canvas4" style="margin:0.5em; padding: 0em;"></canvas>    
+    </div>
+    <p id=instructions>...</p>
+</body>
+<script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script>
+<script src="neurogram.js"></script>
+</html>
