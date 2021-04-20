@@ -75,7 +75,8 @@ function changeImageNetwork(evt) {
     var ix = Array.from(el.parentElement.children).indexOf(el);
     console.log(`canvas ${ix} clicked`);
     networks[ix] = new ANN(defaultLayers);
-    var imgData = createImg(defaultBias, networks[ix]);
+    var bias = [evt.offsetX/(imgSize*2), evt.offsetY/(imgSize*2)]; // create bias based on mouse position.
+    var imgData = createImg(bias, networks[ix]);
     displayImg(canvas[ix], imgData);
     // TODO: could increase number of layers on each click.
 }
