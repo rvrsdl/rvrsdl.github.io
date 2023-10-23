@@ -64,7 +64,7 @@ function changeImageBias(evt) {
     // Recreate the image with the bias based on the mouse position
     var el = evt.currentTarget;
     var ix = Array.from(el.parentElement.children).indexOf(el);
-    console.log(`canvas ${ix} mousemoved`);
+    //console.log(`canvas ${ix} mousemoved`);
     var bias = [evt.offsetX/(imgSize*2), evt.offsetY/(imgSize*2)]; // create bias based on mouse position.
     var imgData = createImg(bias, networks[ix]);
     displayImg(el, imgData);
@@ -73,7 +73,7 @@ function changeImageBias(evt) {
 function changeImageNetwork(evt) {
     var el = evt.currentTarget;
     var ix = Array.from(el.parentElement.children).indexOf(el);
-    console.log(`canvas ${ix} clicked`);
+    //console.log(`canvas ${ix} clicked`);
     networks[ix] = new ANN(defaultLayers);
     var bias = [evt.offsetX/(imgSize*2), evt.offsetY/(imgSize*2)]; // create bias based on mouse position.
     var imgData = createImg(bias, networks[ix]);
@@ -86,7 +86,7 @@ var canvas = document.getElementsByTagName("canvas");
 var coords = this.getCoordVecs(imgSize, imgSize, 1);
 var networks = new Array(canvas.length); // one ANN per canvas
 var defaultBias = [0.5,0.5];
-var defaultLayers = [4,16,16,16,3];
+var defaultLayers = [4,8,16,3];
 for (var i=0; i<canvas.length; i++) {
     canvas[i].width = imgSize;
     canvas[i].height = imgSize;

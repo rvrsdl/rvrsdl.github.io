@@ -1,0 +1,183 @@
+<!doctype html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Interactive DGCA</title>
+
+    <style>
+        body {
+            font-family: helvetica;
+            font-size: 14px;
+        }
+        p {
+            font-size: 12px;
+            font-weight: normal;
+        }
+        button {
+            font-family: helvetica;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        #cy {
+            width: 75%;
+            height: 96%;
+            position: absolute;
+            top: 2%;
+            left: 2%;
+            border: 1px solid blue;
+        }
+        #controls {
+            width: 20%;
+            height: 96%;
+            position: absolute;
+            top: 2%;
+            right: 2%;
+            border: 1px solid red;
+            text-align: center;
+            font-weight: normal;
+        }
+        #tooltip {
+            background-color: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 8px;
+        }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 2px;
+        }
+        .center {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .selected {
+            background-color: #dfcd30;
+        }
+        .form-popup {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            right: 15px;
+            border: 3px solid #f1f1f1;
+            z-index: 9;
+        }
+        .form-container {
+            max-width: 400px;
+            padding: 10px;
+            background-color: rgb(92, 93, 94);
+        }
+
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.1/cytoscape.min.js"></script>
+    <!-- <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.2.3/cytoscape-cola.min.js"></script> -->
+
+    <!-- For fcose layout -->
+    <script src="https://unpkg.com/layout-base/layout-base.js"></script>
+    <script src="https://unpkg.com/cose-base/cose-base.js"></script>
+    <script src="https://unpkg.com/cytoscape-fcose/cytoscape-fcose.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script>
+    <!-- <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script> -->
+    <script src="https://unpkg.com/popper.js@1.14.7/dist/umd/popper.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape-popper@1.0.4/cytoscape-popper.min.js"></script>
+    <script src="https://unpkg.com/tippy.js@4.0.1/umd/index.all.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@4.0.1/index.css" />
+</head>
+
+<body>
+    <div>
+        <div id="cy"></div>
+        <div id="controls" style="display:flex;flex-direction:column;">
+            <div style="background-color: gray;">
+                <h3>Setup</h3>
+                <label for="model-version-dropdown">Model version:</label>
+                <select id="model-version-dropdown">
+                <option value="v2">Version 2 (ALife)</option>
+                <option value="v3" selected>Version 3 (Complex Division)</option>
+                <option value="v4">Version 4 (Edge Types)</option>
+                </select> 
+                <br>
+                <label for="num-states-dropdown">Num. States</label>
+                <select id="num-states-dropdown">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="7">8</option>
+                </select>
+                <div style="font-style: italic;">Rule Size: <span id="rule-size">?</span> weights.</div>
+                <label for="seed-graph-dropdown">Seed Graph</label>
+                <select id="seed-graph-dropdown">
+                    <option value="single_node">Single Node</option>
+                    <option value="ring4" >Ring of 4</option>
+                    <option value="arrow" selected>Arrow</option>
+                    <option value="custom-JSON" >Custom (JSON)</option>
+                </select>
+                <br>
+                <button type="button" id="submit-dropdown-settings" style="font-size:16px;padding:10px;">GO</button>
+                <br> Or...
+                <button type="button" id="open_settings_button" onclick="openForm()">Copy/Paste JSON Settings</button>
+                <div class="form-popup" id="myForm">
+                    <form action="/action_page.php" class="form-container">
+                    <h3>Settings</h3>
+                    <p>Copy or paste settings below in JSON format with fields "num_states", "rule_weights" and "seed_graph".</p>
+                    <textarea id="json-settings-textarea" names="settings" rows="20" cols="50">placeholder</textarea>
+                    <button type="button" id="close-settings" onclick="closeForm()">Close</button>
+                    <button type="button" id="submit-json-settings">Submit</button>
+                    </form>
+                </div>
+                <br>
+            </div>
+            <div style="background-color: cornflowerblue;">
+                <h3>Controls</h3>
+                <button type="button" id="step_bck" title="Undo a transition step." style="font-size:16px;padding:10px;"><<<</button>
+                <button type="button" id="step_fwd" title="Apply a transition step." style="font-size:16px;padding:10px;">>>></button>
+                <br>
+                <button type="button" id="redo-layout" title="Recalculate layout">Redo Layout</button>
+                <br>
+                <button type="button" id="reset_button">Reset to Seed Graph</button>
+                <br>
+                <label for="anim-2step">Two-step animation</label>
+                <input type="checkbox" id="anim-2step" name="anim-2step" value="anim-2step" checked>
+                <p>Two-step animation shows you which nodes are dividing (green border) or being deleted (red/white gradient), before it actually happens (but is slower).</p>
+                <br>
+                <!-- <button type="button" id="open_settings_button" onclick="openExplainer()">Open Explainer</button>
+                <div class="form-popup" id="explainer">
+                </div> -->
+            </div>
+            <!-- <h3>Neighbour Count</h3>
+            <table class="center", id="neigh-count-table">
+                <thead>
+                    <tr><th>State</th><th>In</th><th>Out</th></tr>
+                </thead>
+                <tbody id="tableData">
+                </tbody>
+            </table> -->
+            
+        </div>
+    </div>
+    <script src="./interactive_dgca.js"></script>
+    <script>
+        function openForm() {
+          document.getElementById("myForm").style.display = "block";
+        }
+        function closeForm() {
+          document.getElementById("myForm").style.display = "none";
+        }
+        function openExplainer() {
+          document.getElementById("explainer").style.display = "block";
+        }
+        function closeExplainer() {
+          document.getElementById("explainer").style.display = "none";
+        }
+    </script>
+</body>
+</html>

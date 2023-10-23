@@ -2,11 +2,33 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>NeuralNetImages</title>
+    <title>Riversdale Waldegrave</title>
     <style>
+    body {
+        background-color: black;
+    }
+    canvas {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        z-index: -1;
+    }
+    #bg-canvas {
+        z-index: -1;
+    }
+    h1 {
+        color: white;
+        font-family: "Lucida Console", "Courier New", monospace;
+    }
+    h2 {
+        color: white;
+        font-family: "Lucida Console", "Courier New", monospace;
+    }
     p {
         color: white;
-        text-align: center;
+        text-align: left;
         font-family: "Lucida Console", "Courier New", monospace;
     }
     .flex-container {
@@ -14,17 +36,40 @@
         flex-flow: row wrap;
         justify-content: center;
     }
+    .flex-container > canvas {
+        margin: 0.5em;
+        padding: 0em;
+    }
     </style>
 </head>
-<body style="background: black;">
-    <div class="flex-container">
-        <canvas id="canvas1" style="margin:0.5em; padding: 0em;"></canvas>
-        <canvas id="canvas2" style="margin:0.5em; padding: 0em;"></canvas>
-        <canvas id="canvas3" style="margin:0.5em; padding: 0em;"></canvas>
-        <canvas id="canvas4" style="margin:0.5em; padding: 0em;"></canvas>    
-    </div>
-    <p id=instructions>...</p>
+<body>
+    <canvas id="bg-canvas">
+        Blah
+    </canvas>
+    <!-- <h1>Riversdale Waldegrave</h1>
+    <p>
+        I am a PhD student at the University of York.
+    </p> -->
+    <h2>Work in Progress</h2>
+    <p><a href="./neurogram.html">Neurogram</a></p>
+    <p><a href="./interactive_dgca.html">Interactive DGCA</a></p>
+    <script type="text/javascript">
+      var c = document.getElementById("bg-canvas");
+      var ctx = c.getContext("2d");
+      var grd = ctx.createLinearGradient(0, 0, 600, 600);
+
+      grd.addColorStop(0, "#000000");
+      grd.addColorStop(1, "#00FF00");
+
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, 600, 600);
+    </script>
+
 </body>
+<!-- <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.2.3/cytoscape-cola.min.js"></script>
+<script src="index.js"></script> -->
 <script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script>
-<script src="neurogram.js"></script>
+<!-- <script src="neurogram.js"></script> -->
 </html>
