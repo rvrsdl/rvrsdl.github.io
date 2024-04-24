@@ -73,9 +73,12 @@
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.1/cytoscape.min.js"></script>
+    <!-- For cola layout -->
     <!-- <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.2.3/cytoscape-cola.min.js"></script> -->
-
+    <!-- For cosmos over cytoscape (can't get to work)-->
+    <!-- <script src=" https://cdn.jsdelivr.net/npm/@cosmograph/cosmos@1.6.0/dist/index.min.js "></script>
+    <script src=" https://cdn.jsdelivr.net/npm/cosmos-over-cytoscape@1.0.3/dist/cosmos-over-cytoscape.min.js "></script> -->
     <!-- For fcose layout -->
     <script src="https://unpkg.com/layout-base/layout-base.js"></script>
     <script src="https://unpkg.com/cose-base/cose-base.js"></script>
@@ -97,7 +100,7 @@
                 <h3>Setup</h3>
                 <label for="model-version-dropdown">Model version:</label>
                 <select id="model-version-dropdown">
-                <option value="v2">Version 2 (ALife)</option>
+                <option value="v2">Version 2 (Simple Division)</option>
                 <option value="v3" selected>Version 3 (Complex Division)</option>
                 <option value="v4">Version 4 (Edge Types)</option>
                 </select> 

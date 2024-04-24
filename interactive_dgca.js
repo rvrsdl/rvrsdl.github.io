@@ -74,7 +74,7 @@ ALLSTATES.forEach((st, idx) => {
             style: {
                 shape: 'ellipse',
                 'background-color': COLOURS[idx],
-                label: 'data(id)'
+                //label: 'data(id)'
             }
         }
     )
