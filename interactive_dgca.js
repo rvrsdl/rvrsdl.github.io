@@ -36,11 +36,11 @@ var cy_style = [
     {
         selector: 'edge',
         style: {
-            'width': 3,
+            'width': 2,
             'line-color': '#4d4d33',
             'target-arrow-color': '#4d4d33',
             'target-arrow-shape': 'triangle',
-            'curve-style': 'bezier'
+            'curve-style': 'straight' //'haystack' // apparently faster than 'bezier'
         }
     },
     {
@@ -230,6 +230,11 @@ function refreshEvents() {
     cy.nodes().bind("mouseover", event => nodeMouseover(event.target));
     cy.nodes().unbind("mouseout");
     cy.nodes().bind("mouseout", event => nodeMouseout(event.target));
+    cy.nodes().unbind("click");
+    cy.nodes().bind("click", event => 
+            console.log(event.target.component())
+            // TODO: can use this to select connected components (NNB includes both nodes and edgeso)
+    );
 }
 
 // function makeNeighCountTable() {
@@ -272,7 +277,7 @@ function createNeighCountTable(node) {
 
 function nodeMouseover(node) {
     // All the stuff I want to happen on mouseover.
-    console.log('mouseover');
+    //console.log('mouseover');
     node.select();
     makeTooltip(node);
     node.tippy.show();
@@ -391,6 +396,7 @@ function dgcaStep() {
     var new_states = {};
     var split_flags = {};
     // first loop through current nodes and determine what action they should take.
+    cy.startBatch();
     current_nodes.forEach(function (nd) {
         var nd_id = nd.data('id');
         var inp_vec = getNeighbourhoodLaplacianVector(nd);
@@ -435,12 +441,12 @@ function dgcaStep() {
         }
 
     });
-    console.log("To remove:");
-    console.log(to_remove);
-    console.log("New states:");
-    console.log(new_states);
-    console.log("Split flags:");
-    console.log(split_flags);
+    // console.log("To remove:");
+    // console.log(to_remove);
+    // console.log("New states:");
+    // console.log(new_states);
+    // console.log("Split flags:");
+    // console.log(split_flags);
 
     // May as well actually do it in same function!
     TIMESTEP += 1;
@@ -554,9 +560,11 @@ function dgcaStep() {
     });
     // CHANGE NODE STATES
     Object.entries(new_states).forEach(([nd_id, state]) => {
-        cy.nodes('#' + nd_id).data('state', state);
+        cy.$id(nd_id).data('state', state);
+        //cy.nodes('#' + nd_id).data('state', state);
     });
-    console.log(document.getElementById('anim-2step').checked)
+    cy.endBatch();
+    //console.log(document.getElementById('anim-2step').checked)
     if (document.getElementById('anim-2step').checked) {
         // do the layout before removing the deleted nodes so that we can fade them out.
         var lay = cy.layout({
@@ -566,11 +574,13 @@ function dgcaStep() {
         lay.promiseOn('layoutstop').then(evt => { // what to do once the layout has finished running
             // remove "splitting" indicator from nodes
             Object.keys(split_flags).forEach(nd_id => {
-                cy.nodes('#' + nd_id).data('splitting', 0);
+                cy.$id(nd_id).data('splitting', 0);
+                //cy.nodes('#' + nd_id).data('splitting', 0);
             });
             // REMOVE DELETED NODES
             to_remove.forEach(nd_id => {
-                cy.nodes('#' + nd_id).remove();
+                cy.$id(nd_id).remove();
+                //cy.nodes('#' + nd_id).remove();
             });
             redoLayout(false);
         })
@@ -578,11 +588,13 @@ function dgcaStep() {
     } else {
         // remove "splitting" indicator from nodes
         Object.keys(split_flags).forEach(nd_id => {
-            cy.nodes('#' + nd_id).data('splitting', 0);
+            cy.$id(nd_id).data('splitting', 0);
+            //cy.nodes('#' + nd_id).data('splitting', 0);
         });
         // REMOVE DELETED NODES
         to_remove.forEach(nd_id => {
-            cy.nodes('#' + nd_id).remove();
+            cy.$id(nd_id).remove();
+            //cy.nodes('#' + nd_id).remove();
         });
         redoLayout(false);
     }
