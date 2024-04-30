@@ -782,7 +782,7 @@ function stepForward() {
     step_count_info.innerHTML = TIMESTEP;
     node_count_info.innerHTML = cy.nodes().length;
     component_count_info.innerHTML = cy.elements().components().length;
-    cy.elements().removeClass('component-selected');
+    cy.$('.component-selected').removeClass('component-selected');
 }
 
 function stepBack() {
@@ -797,7 +797,7 @@ function stepBack() {
     step_count_info.innerHTML = TIMESTEP;
     node_count_info.innerHTML = cy.nodes().length;
     component_count_info.innerHTML = cy.elements().components().length;
-    cy.elements().removeClass('component-selected');
+    cy.$('.component-selected').removeClass('component-selected');
 }
 
 var running = false;
@@ -848,6 +848,7 @@ function isolateComponent() {
         // To negate a class I think we have to do the rather verbose:
         cy.elements().not(cy.$('.component-selected'))
     )
+    cy.$('.component-selected').removeClass('component-selected');
 }
 
 function newWindow() {
