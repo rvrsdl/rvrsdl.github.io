@@ -6,14 +6,9 @@
 // 5. Preset examples (seed graph and rule)
 // 6. Versions 2 & 4!
 
-var CHILD_WINDOW = false;
-if (typeof window.passed !== 'undefined') {
-    CHILD_WINDOW = true;
-}
-
 const ALLSTATES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 // using the "Dutch Field" colour palette from here: https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
-//const COLOURS = ["#e60049", "#0bb4ff", "#e6d800", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+const COLOURS = ["#e60049", "#0bb4ff", "#e6d800", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
 //const COLOURS = ["DarkRed","DarkGreen","DarkBlue","DarkMagenta","DarkOrange","DarkCyan","DarkSlateGray","DarkSalmon"];
 var VERSION = 'v3';
 var TIMESTEP = 0;
@@ -23,20 +18,6 @@ var RULE = {};
 var SEEDGRAPH = {};
 var next_node_id = 0;
 var cy = {}; // To hold cytoscape variable.
-var step_pause = 2000; // Wait between steps in continual run (in ms)
-var run_timestamp; // serves as a unique ID for the run (for downloading data)
-
-var model_version_dropdown = document.getElementById("model-version-dropdown")
-var num_states_dropdown = document.getElementById("num-states-dropdown");
-var seed_graph_dropdown = document.getElementById("seed-graph-dropdown");
-var json_settings_textarea = document.getElementById("json-settings-textarea");
-var rule_size_info = document.getElementById("rule-size");
-var play_pause_btn = document.getElementById("play_pause");
-var anim_layout_checkbox = document.getElementById('anim-layout');
-var anim_2step_checkbox = document.getElementById('anim-2step');
-var step_count_info = document.getElementById("step-count");
-var node_count_info = document.getElementById("node-count");
-var component_count_info = document.getElementById("component-count");
 
 document.getElementById("redo-layout").addEventListener("click", _ => redoLayout(true));
 document.getElementById("step_fwd").addEventListener("click", stepForward); //applyTransitions
@@ -44,53 +25,29 @@ document.getElementById("step_bck").addEventListener("click", stepBack);
 document.getElementById("reset_button").addEventListener("click", resetCytoscape);
 document.getElementById("submit-json-settings").addEventListener("click", submitJSONSettings);
 document.getElementById("submit-dropdown-settings").addEventListener("click", submitDropdownSettings);
-play_pause_btn.addEventListener("click", toggleRun);
-document.getElementById("save_img_button").addEventListener("click", saveImage);
-document.getElementsByName("selfloop-style").forEach((btn) => {
-    btn.addEventListener("change", function(event) {
-        setSelfLoopStyle(event.target.value);
-    });
-});
-document.getElementById("isolate-component").addEventListener("click", isolateComponent);
-document.getElementById("newtab-component").addEventListener("click", newWindow);
+
+var model_version_dropdown = document.getElementById("model-version-dropdown")
+var num_states_dropdown = document.getElementById("num-states-dropdown");
+var seed_graph_dropdown = document.getElementById("seed-graph-dropdown");
+var json_settings_textarea = document.getElementById("json-settings-textarea");
+var rule_size_info = document.getElementById("rule-size");
 
 var cy_style = [
     {
         selector: 'edge',
         style: {
-            'width': 1,
-            'line-color': '#ffffff',
-            'line-opacity': '0.7',
-            'mid-target-arrow-color': '#ffffff',
-            'mid-target-arrow-shape': 'vee', // haystack edges (the fastest) only support mid arrows.
-            'curve-style': 'haystack',//'straight', // apparently faster than 'bezier' (curved)
-            //'haystack-radius': 0, // ie. edges go to centr of node.
-        }
-    },
-    {
-        // haystack edges can't do self-loop so we need a different style for them (at the cost of speed)
-        selector: 'edge:loop',
-        style: {
-            // 'width': 1,
-            // 'line-color': '#ffffff',
-            // 'mid-target-arrow-color': '#ffffff',
-            // 'mid-target-arrow-shape': 'vee', // haystack edges (the fastest) only support mid arrows.
-            'curve-style': 'bezier',//'straight', // apparently faster than 'bezier' (curved)
-            //'loop-sweep': '-90deg'
-        }
-    },
-    {
-        selector: 'node',
-        style: {
-            'width': 10,
-            'height': 10
+            'width': 2,
+            'line-color': '#4d4d33',
+            'target-arrow-color': '#4d4d33',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'straight' //'haystack' // apparently faster than 'bezier'
         }
     },
     {
         selector: 'node:selected',
         style: {
-            'border-width': 1,
-            'border-color': '#808080'
+            'border-width': 2,
+            'border-color': '#4d4d33'
         }
     },
     {
@@ -104,30 +61,10 @@ var cy_style = [
     {
         selector: 'node[splitting=1]',
         style: {
-            'border-width': 1,
-            'border-color': 'lime',
-            // 'ghost': 'yes',
-            // 'ghost-offset-x': 5,
-            // 'ghost-offset-y': 5,
-            // 'ghost-opacity': 0.6
-        }
-    },
-    {
-        selector: 'node.component-selected',
-        style: {
             'border-width': 2,
-            'border-color': '#4bf542',
+            'border-color': 'lime'
         }
     },
-    {
-        selector: 'edge.component-selected',
-        style: {
-            'width': 2,
-            'line-color': '#4bf542',
-            'line-opacity': '1',
-            'mid-target-arrow-color': '#4bf542',
-        }
-    }
 ];
 // Make each state node have a different colour
 ALLSTATES.forEach((st, idx) => {
@@ -143,76 +80,25 @@ ALLSTATES.forEach((st, idx) => {
     )
 });
 
-const layoutOptions = {
-    name: 'fcose',
-    quality: "default",
-    randomize: true,
-    animate: false,
-    animationDuration: 500,
-    animationEasing: "ease-in-out-quad", // Easing of animation, if enabled
-    fit: true, // Fit the viewport to the repositioned nodes
-    padding: 30, // Padding around layout
-    // Whether or not simple nodes (non-compound nodes) are of uniform dimensions
-    uniformNodeDimensions: true,
-    // Whether to pack disconnected components - cytoscape-layout-utilities extension should be registered and initialized
-    packComponents: true,
-    // False for random, true for greedy sampling
-    samplingType: false,
-    // Sample size to construct distance matrix
-    sampleSize: 25,
-    // Separation amount between nodes
-    nodeSeparation: 75,
-    // Power iteration tolerancetrue
-    piTol: 0.0000001,
-    // Node repulsion (non overlapping) multiplier
-    nodeRepulsion: node => 4500,
-    // Ideal edge (non nested) length
-    idealEdgeLength: edge => 50,
-    // Divisor to compute edge forces
-    edgeElasticity: edge => 0.45,
-    // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
-    numIter: 2500,
-};
-
-
 window.onload = initPage();
-
 function defaultSettings() {
     model_version_dropdown.value = 'v3';
     num_states_dropdown.value = 3;
     initNumStates();
     seed_graph_dropdown.value = 'arrow';
     seedGraphChooser();
-    animCheckBox(); //for initial state
-    setJSONSettings();
 }
-
-// function passedSettings() {
-//     model_version_dropdown.value = window.passed.version;
-//     num_states_dropdown.value = window.passed.num_states;
-//     seed_graph_dropdown.value = 'custom-JSON'; // because we are starting with the passed graph
-//     SEEDGRAPH = window.passed.cy_eles;
-//     RULE = window.passed.rule;
-//     VERSION = window.passed.version;
-//     NUMSTATES = window.passed.num_states;
-//     STATES = ALLSTATES.slice(0, NUMSTATES);
-//     animCheckBox(); // don't bother replicating state of this from parent window
-//     setJSONSettings();
-//     next_node_id = window.passed.next_node_id;
-// }
-
 
 function initPage() {
     defaultSettings();
+    console.log(seed_graph_dropdown.value);
     cy = initCytoscape();
     cy.ready(_ => {
-        refreshEvents();       
+        refreshEvents();
+        next_node_id = cy.nodes().length; // reset node counter
+        TIMESTEP = 0;
     });
-    if (CHILD_WINDOW) {
-        // Bit of a roundabout way of doing it, but re-uses existing code.
-        json_settings_textarea.value = window.passed;
-        submitJSONSettings();
-    }
+    setJSONSettings();
 }
 
 function initNumStates() {
@@ -230,6 +116,7 @@ function initNumStates() {
         model_version_dropdown.value = 'v3';
         initNumStates();
     }
+    console.log(RULE)
     rule_size_info.innerHTML = RULE.size;
     //makeNeighCountTable();
 }
@@ -291,38 +178,19 @@ function initCytoscape() {
         container: document.getElementById('cy'),
         elements: seed_graph_copy,
         style: cy_style,
-        layout: layoutOptions
+        layout: {
+            name: 'fcose' //'cola'
+        }
     });
     cyx.data('prev', cyx.json());
-    // reset info
-    //next_node_id = cyx.nodes().length; // reset node counter
-    next_node_id = maxNodeID(cyx.nodes())+1; // works if we are in child window and have been passed a graph with high ids.
-    TIMESTEP = 0;
-    step_count_info.innerHTML = TIMESTEP;
-    node_count_info.innerHTML = cyx.nodes().length;;
-    component_count_info.innerHTML = cyx.elements().components().length;
-    run_timestamp = getTimestamp();
     return cyx
 }
 
 function resetCytoscape() {
     cy.destroy();
     cy = initCytoscape();
-}
-
-function maxNodeID(nodes) {
-    // To find what the next node id should be.
-    // Most of the time we can keep track of this as we go along, 
-    // but this is useful if we are in a child window and have been passed
-    // a graph with existing ids (which may be higher than the number of 
-    // nodes it has).
-    let max_value = 0;
-    nodes.forEach(nd => {
-        if (nd.id() > max_value) {
-            max_value = nd.id();
-        }
-    })
-    return max_value;
+    next_node_id = cy.nodes().length; // reset node counter
+    TIMESTEP = 0;
 }
 
 function setJSONSettings() {
@@ -362,24 +230,11 @@ function refreshEvents() {
     cy.nodes().bind("mouseover", event => nodeMouseover(event.target));
     cy.nodes().unbind("mouseout");
     cy.nodes().bind("mouseout", event => nodeMouseout(event.target));
-    cy.nodes().unbind("dblclick");
-    cy.nodes().bind("dblclick", event => selectComponent(event.target));
-}
-
-
-
-function animCheckBox() {
-    if (anim_layout_checkbox.checked) {
-        anim_2step_checkbox.disabled = false;
-        anim_2step_checkbox.checked = true;
-        layoutOptions.animate = true;
-        step_pause = 2000;
-    } else {
-        anim_2step_checkbox.checked = false;
-        anim_2step_checkbox.disabled = true;
-        layoutOptions.animate = false;
-        step_pause = 1000; // can be a bit faster if not animating
-    }
+    cy.nodes().unbind("click");
+    cy.nodes().bind("click", event => 
+            console.log(event.target.component())
+            // TODO: can use this to select connected components (NNB includes both nodes and edgeso)
+    );
 }
 
 // function makeNeighCountTable() {
@@ -411,7 +266,7 @@ function createNeighCountTable(node) {
     var node_state = node.data('state');
     STATES.forEach(function (st, idx) {
         var underline = "text-decoration-line:none;";
-        if (st == node_state) {
+        if (st==node_state) {
             underline = "text-decoration-line:underline;";
         }
         table += `<tr><td><span style="color:${COLOURS[idx]};font-weight:bold;${underline}">${st}</span></td><td>${in_counts[st]}</td><td>${out_counts[st]}</td><tr>`;
@@ -436,11 +291,6 @@ function nodeMouseout(node) {
     node.tippy.hide();
 }
 
-function selectComponent(nd) {
-    // Just for debugging - just logs how many nodes and edges are in a component.
-    nd.component().toggleClass('component-selected');
-}
-
 function makeTooltip(node) {
     // make a tooltip showing counts of incoming and outgoing nodes.
     var ref = node.popperRef(); // used for positioning
@@ -451,8 +301,10 @@ function makeTooltip(node) {
 }
 
 function redoLayout(randomise) {
-    layoutOptions.randomize = randomise;
-    cy.layout(layoutOptions).run();
+    cy.layout({
+        name: 'fcose', //'cola'
+        randomize: randomise
+    }).run();
 }
 
 function getNeighbourStateCounts(node) {
@@ -548,9 +400,6 @@ function dgcaStep() {
     current_nodes.forEach(function (nd) {
         var nd_id = nd.data('id');
         var inp_vec = getNeighbourhoodLaplacianVector(nd);
-        //RULE.shape.length === 2 && inp_vec.shape.length === 1 && RULE.shape[1] === inp_vec.shape[0]
-        console.log(`matmul ${RULE.shape} x ${inp_vec.shape}, is ok? ${RULE.shape.length === 2 && inp_vec.shape.length === 1 && RULE.shape[1] === inp_vec.shape[0]}`);
-        console.log(nj.dot(RULE, inp_vec));
         var out_vec = nj.tanh(nj.dot(RULE, inp_vec));
         if (VERSION == 'v2') {
             var result = argMax(out_vec);
@@ -615,16 +464,10 @@ function dgcaStep() {
         //Now using the node_parents and node_children dicts instead, BUT compound nodes could actually be useful
         //for plotting (as an intermediate step showing new nodes being "born")
         // keep dicts of current node incomers and outgoers - needed when creating child edges
-        var nd = cy.$id(nd_id);
-        orig_incomers[nd_id] = nd.incomers('node');
-        orig_outgoers[nd_id] = nd.outgoers('node');
-        var orig_state = nd.data('state'); // new node gets orig node state
-        parent_pos = nd.position();
-        // I think the above is faster than the below.
-        //orig_incomers[nd_id] = cy.nodes('#' + nd_id).incomers('node');
-        //orig_outgoers[nd_id] = cy.nodes('#' + nd_id).outgoers('node');
-        //var orig_state = cy.nodes('#' + nd_id).data('state'); // new node gets orig node state
-        //parent_pos = cy.nodes('#' + nd_id).position();
+        orig_incomers[nd_id] = cy.nodes('#' + nd_id).incomers('node');
+        orig_outgoers[nd_id] = cy.nodes('#' + nd_id).outgoers('node');
+        var orig_state = cy.nodes('#' + nd_id).data('state'); // new node gets orig node state
+        parent_pos = cy.nodes('#' + nd_id).position();
         cy.add({ group: 'nodes', data: { id: next_node_id, state: orig_state }, position: { x: parent_pos.x + 1, y: parent_pos.y + 1 } });
         new_node_ids.push(next_node_id);
         node_parents[next_node_id] = nd_id;
@@ -718,32 +561,40 @@ function dgcaStep() {
     // CHANGE NODE STATES
     Object.entries(new_states).forEach(([nd_id, state]) => {
         cy.$id(nd_id).data('state', state);
+        //cy.nodes('#' + nd_id).data('state', state);
     });
     cy.endBatch();
-    if (anim_2step_checkbox.checked) {
+    //console.log(document.getElementById('anim-2step').checked)
+    if (document.getElementById('anim-2step').checked) {
         // do the layout before removing the deleted nodes so that we can fade them out.
-        layoutOptions.randomize = false;
-        var lay = cy.layout(layoutOptions);
-        lay.promiseOn('layoutstop').then(evt => { // what to do once the layout has finished running (ie. run second step)
+        var lay = cy.layout({
+            name: 'fcose', //'cola'
+            randomize: false
+        })
+        lay.promiseOn('layoutstop').then(evt => { // what to do once the layout has finished running
             // remove "splitting" indicator from nodes
             Object.keys(split_flags).forEach(nd_id => {
                 cy.$id(nd_id).data('splitting', 0);
+                //cy.nodes('#' + nd_id).data('splitting', 0);
             });
             // REMOVE DELETED NODES
             to_remove.forEach(nd_id => {
                 cy.$id(nd_id).remove();
+                //cy.nodes('#' + nd_id).remove();
             });
             redoLayout(false);
         })
-        lay.run(); // run first step
+        lay.run();
     } else {
         // remove "splitting" indicator from nodes
         Object.keys(split_flags).forEach(nd_id => {
             cy.$id(nd_id).data('splitting', 0);
+            //cy.nodes('#' + nd_id).data('splitting', 0);
         });
         // REMOVE DELETED NODES
         to_remove.forEach(nd_id => {
             cy.$id(nd_id).remove();
+            //cy.nodes('#' + nd_id).remove();
         });
         redoLayout(false);
     }
@@ -776,13 +627,9 @@ function stepForward() {
             cy.data('next', null);
         }
     } else {
-        //console.log('Calculating next step');
+        console.log('Calculating next step');
         dgcaStep();
     }
-    step_count_info.innerHTML = TIMESTEP;
-    node_count_info.innerHTML = cy.nodes().length;
-    component_count_info.innerHTML = cy.elements().components().length;
-    cy.elements().removeClass('component-selected');
 }
 
 function stepBack() {
@@ -794,73 +641,4 @@ function stepBack() {
         nd.data('deleting', 0);
     });
     redoLayout(false);
-    step_count_info.innerHTML = TIMESTEP;
-    node_count_info.innerHTML = cy.nodes().length;
-    component_count_info.innerHTML = cy.elements().components().length;
-    cy.elements().removeClass('component-selected');
-}
-
-var running = false;
-var runloop;
-function toggleRun() {
-    if (running) {
-        clearInterval(runloop);
-        play_pause_btn.innerHTML = '<i class="material-icons">play_arrow</i>';
-    } else {
-        runloop = setInterval(stepForward, step_pause);
-        play_pause_btn.innerHTML = '<i class="material-icons">pause</i>';
-    }
-    running = !running;
-}
-
-function saveImage() {
-    saveAs(cy.png(), `dgca_${run_timestamp}_step${TIMESTEP}.png`);
-}
-
-function getTimestamp() {
-    // From https://stackoverflow.com/questions/19448436/how-to-create-date-in-yyyymmddhhmmss-format-using-javascript
-    function pad2(n) { return n < 10 ? '0' + n : n }
-    var date = new Date();
-    return date.getFullYear().toString() + pad2(date.getMonth() + 1) + pad2( date.getDate()) + pad2( date.getHours() ) + pad2( date.getMinutes() ) + pad2( date.getSeconds() );
-}
-
-function setSelfLoopStyle(style) {
-    //console.log(style);
-    // Change the JSON stylesheet, then apply it.
-    cy_style.forEach((elem) => {
-        // find the edge:loop part of the stylesheet
-        if (elem.selector=="edge:loop") {
-            if (style=="big-selfloops") {
-                elem.style = {'curve-style': 'bezier'};
-            } else if (style=="small-selfloops") {
-                elem.style = {'curve-style': 'haystack'};
-            }
-        }
-    });
-    //console.log(cy_style);
-    cy.style(cy_style).update;
-}
-
-function isolateComponent() {
-    //Removes all but the selected components
-    //cy.remove('.component-selected');
-    cy.remove(
-        // To negate a class I think we have to do the rather verbose:
-        cy.elements().not(cy.$('.component-selected'))
-    )
-}
-
-function newWindow() {
-    //https://stackoverflow.com/questions/1830347/quickest-way-to-pass-data-to-a-popup-window-i-created-using-window-open
-    var new_window = window.open(window.location.href);
-    var eles_json = cy.$('.component-selected').jsons();
-    // new_window.passed = {
-    //     'rule': RULE,
-    //     'cy_eles': eles_json,
-    //     'num_states': NUMSTATES,
-    //     'version': VERSION,
-    //     'seed_graph_name': seed_graph_dropdown.value,
-    //     'next_node_id': next_node_id // so that we don't have to reassign ids
-    // };
-    new_window.passed = JSON.stringify({ version: VERSION, num_states: NUMSTATES, rule: RULE, seed_graph: eles_json, next_node_id: next_node_id });
 }
