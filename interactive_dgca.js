@@ -322,7 +322,7 @@ function maxNodeID(nodes) {
             max_value = nd.id();
         }
     })
-    return max_value;
+    return Number(max_value);
 }
 
 function setJSONSettings() {
