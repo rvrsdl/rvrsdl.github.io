@@ -64,7 +64,7 @@ var cy_style = [
             'mid-target-arrow-color': '#ffffff',
             'mid-target-arrow-shape': 'vee', // haystack edges (the fastest) only support mid arrows.
             'curve-style': 'haystack',//'straight', // apparently faster than 'bezier' (curved)
-            //'haystack-radius': 0, // ie. edges go to centr of node.
+            'haystack-radius': 0, // ie. edges go to centr of node.
         }
     },
     {
@@ -94,7 +94,7 @@ var cy_style = [
         }
     },
     {
-        selector: 'node[deleting=1]',
+        selector: 'node.deleting',
         style: {
             'background-fill': 'radial-gradient',
             'background-gradient-stop-colors': ['red', 'white'],
@@ -102,7 +102,7 @@ var cy_style = [
         }
     },
     {
-        selector: 'node[splitting=1]',
+        selector: 'node.splitting',
         style: {
             'border-width': 1,
             'border-color': 'lime',
@@ -437,8 +437,11 @@ function nodeMouseout(node) {
 }
 
 function selectComponent(nd) {
-    // Just for debugging - just logs how many nodes and edges are in a component.
-    nd.component().toggleClass('component-selected');
+    var comp = nd.component();
+    comp.toggleClass('component-selected');
+    // select all the nodes two so that component can be dragged as a group
+    // this doesn't seem to be working...
+    comp.nodes('node.component-selected').select();
 }
 
 function makeTooltip(node) {
@@ -559,10 +562,12 @@ function dgcaStep() {
                 new_states[nd_id] = STATES[result];
             } else if (result == STATES.length) {
                 // remove node action (but only at end)
-                nd.data('deleting', 1);
+                //nd.data('deleting', 1);
+                nd.addClass('deleting');
                 to_remove.push(nd_id);
             } else if (result == (STATES.length + 1)) {
-                nd.data('splitting', 1);
+                //nd.data('splitting', 1);
+                nd.addClass('splitting');
                 split_flags[nd_id] = {};
                 split_flags[nd_id]['n'] = 0;
                 split_flags[nd_id]['lf'] = 2;
@@ -572,14 +577,16 @@ function dgcaStep() {
             var action_choice = argMax(out_vec.slice([3]));
             if (action_choice == 0) {
                 // remove node action (but only at end)
-                nd.data('deleting', 1);
+                //nd.data('deleting', 1);
+                nd.addClass('deleting');
                 to_remove.push(nd_id);
             } else if (action_choice == 1) {
                 // node remains, just find new state
                 new_states[nd_id] = STATES[argMax(out_vec.slice(-STATES.length))]; // argmax of last S items
             } else if (action_choice == 2) {
                 // node splits. We need to work out split type
-                nd.data('splitting', 1);
+                //nd.data('splitting', 1);
+                nd.addClass('splitting');
                 split_flags[nd_id] = {};
                 split_flags[nd_id]['n'] = argMax(out_vec.slice([3, 7]));
                 split_flags[nd_id]['lf'] = argMax(out_vec.slice([7, 11]));
@@ -727,7 +734,8 @@ function dgcaStep() {
         lay.promiseOn('layoutstop').then(evt => { // what to do once the layout has finished running (ie. run second step)
             // remove "splitting" indicator from nodes
             Object.keys(split_flags).forEach(nd_id => {
-                cy.$id(nd_id).data('splitting', 0);
+                //cy.$id(nd_id).data('splitting', 0);
+                cy.$id(nd_id).removeClass('splitting');
             });
             // REMOVE DELETED NODES
             to_remove.forEach(nd_id => {
@@ -739,7 +747,8 @@ function dgcaStep() {
     } else {
         // remove "splitting" indicator from nodes
         Object.keys(split_flags).forEach(nd_id => {
-            cy.$id(nd_id).data('splitting', 0);
+            //cy.$id(nd_id).data('splitting', 0);
+            cy.$id(nd_id).removeClass('splitting');
         });
         // REMOVE DELETED NODES
         to_remove.forEach(nd_id => {
@@ -790,8 +799,10 @@ function stepBack() {
     cy.json(cy.data('prev')); // revert to previous step
     cy.data('next', next); // attach current graph in "next" attrib so we don't have to recalculate if we step forward.
     cy.nodes().forEach(nd => {
-        nd.data('splitting', 0);
-        nd.data('deleting', 0);
+        //nd.data('splitting', 0);
+        //nd.data('deleting', 0);
+        nd.removeClass('splitting');
+        nd.removeClass('deleting');
     });
     redoLayout(false);
     step_count_info.innerHTML = TIMESTEP;
@@ -865,3 +876,85 @@ function newWindow() {
     // };
     new_window.passed = JSON.stringify({ version: VERSION, num_states: NUMSTATES, rule: RULE, seed_graph: eles_json, next_node_id: next_node_id });
 }
+
+function createSLPDiagram() {
+    var nodes = [];
+    var edges = [];
+    for (let i=0; i<NUMSTATES; i++) {
+        nodes.push({data: {id: ALLSTATES[i]+'_in',  value: 0, row: i, col: 0}});
+        nodes.push({data: {id: ALLSTATES[i]+'_out', value: 0, row: i+NUMSTATES, col: 0}});
+        nodes.push({data: {id: 'State'+ALLSTATES[i], value: 0, row: i, col: 1}});
+    }
+    // For v2
+    nodes.push({data: {id: 'bias', value: 0, row: NUMSTATES*2, col: 0}});
+    nodes.push({data: {id: 'Keep', value: 0, row: NUMSTATES, col: 1}});
+    nodes.push({data: {id: 'Remove', value: 0, row: NUMSTATES+1, col: 1}});
+    nodes.push({data: {id: 'Divide', value: 0, row: NUMSTATES+2, col: 1}});
+    return {nodes: nodes, edges: edges};
+}
+
+// Add neural net diagram in side panel
+var slp = {
+    nodes: [
+        { data: { id: 'A_in', value: 0, x:0, y:0} },
+        { data: { id: 'B_in', value: 0, x:0, y:1 } },
+        { data: { id: 'A_out', value: 0, x:0, y:2 } },
+        { data: { id: 'B_out', value: 0, x:0, y:3} },
+
+        { data: { id: 'StateA', value: 0, x:1, y:0} },
+        { data: { id: 'StateB', value: 0, x:1, y:1 } },
+        { data: { id: 'Keep', value: 0, x:1, y:2 } },
+        { data: { id: 'Remove', value: 0, x:1, y:3 } },
+        { data: { id: 'Divide', value: 0, x:1, y:4 } },
+    ],
+    edges: [
+        { data: { id: '0,0', source: 'A_in', target: 'StateA' } },
+        { data: { id: '0,1', source: 'A_in', target: 'StateB' } },
+        { data: { id: '0,2', source: 'A_in', target: 'Keep' } },
+        { data: { id: '0,3', source: 'A_in', target: 'Remove' } },
+        { data: { id: '0,4', source: 'A_in', target: 'Divide' } },
+        { data: { id: '1,0', source: 'B_in', target: 'StateA' } },
+        { data: { id: '1,1', source: 'B_in', target: 'StateB' } },
+        { data: { id: '1,2', source: 'B_in', target: 'Keep' } },
+        { data: { id: '1,3', source: 'B_in', target: 'Remove' } },
+        { data: { id: '1,4', source: 'B_in', target: 'Divide' } }
+    ]
+}
+var cy_nn = cytoscape({
+
+    container: document.getElementById('cy-nn'), // container to render in
+
+    elements: slp,
+
+    style: [ // the stylesheet for the graph
+        {
+        selector: 'node',
+        style: {
+            'background-color': '#666',
+            'label': 'data(id)',
+            'color': 'white',
+            'width':  6,
+            'height': 6
+        }
+        },
+
+        {
+        selector: 'edge',
+        style: {
+            'width': 1,
+            'line-color': '#ccc',
+            'target-arrow-color': '#ccc',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier'
+        }
+        }
+    ],
+
+    layout: {
+        name: 'grid',
+        rows: 5,
+        cols: 2,
+        position: function(nd) {return {'row': nd.data('y'), 'col': nd.data('x')}}
+    }
+
+});
