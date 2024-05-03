@@ -46,6 +46,8 @@ document.getElementById("submit-json-settings").addEventListener("click", submit
 document.getElementById("submit-dropdown-settings").addEventListener("click", submitDropdownSettings);
 play_pause_btn.addEventListener("click", toggleRun);
 document.getElementById("save_img_button").addEventListener("click", saveImage);
+document.getElementById("save_graph_button").addEventListener("click", saveGraphJSON);
+document.getElementById("save_style_button").addEventListener("click", saveStyleJSON);
 document.getElementsByName("selfloop-style").forEach((btn) => {
     btn.addEventListener("change", function(event) {
         setSelfLoopStyle(event.target.value);
@@ -53,6 +55,7 @@ document.getElementsByName("selfloop-style").forEach((btn) => {
 });
 document.getElementById("isolate-component").addEventListener("click", isolateComponent);
 document.getElementById("newtab-component").addEventListener("click", newWindow);
+document.getElementById("show-stats-button").addEventListener("click", populateStatsTable);
 
 var cy_style = [
     {
@@ -824,6 +827,57 @@ function toggleRun() {
 
 function saveImage() {
     saveAs(cy.png(), `dgca_${run_timestamp}_step${TIMESTEP}.png`);
+}
+
+function saveGraphJSON() {
+    var cyjson = cy.json().elements;
+    // remove fields we don't need
+    cyjson.nodes.forEach((nd) => {
+        delete nd.position;
+        delete nd.group;
+        delete nd.removed;
+        delete nd.selected;
+        delete nd.selectable;
+        delete nd.locked;
+        delete nd.grabbable;
+        delete nd.pannable;
+        delete nd.classes;
+    });
+    cyjson.edges.forEach((ed) => {
+        delete ed.position;
+        delete ed.group;
+        delete ed.removed;
+        delete ed.selected;
+        delete ed.selectable;
+        delete ed.locked;
+        delete ed.grabbable;
+        delete ed.pannable;
+        delete ed.classes;
+    })
+    // delete cyjson.data; // graph level data (including whole of prev graph!)
+    // delete cyjson.zoomingEnabled;
+    // delete  cyjson.userZoomingEnabled;
+    // delete  cyjson.zoom;
+    // delete  cyjson.minZoom;
+    // delete  cyjson.maxZoom;
+    // delete  cyjson.panningEnabled;
+    // delete  cyjson.userPanningEnabled;
+    // delete  cyjson.pan;
+    // delete  cyjson.boxSelectionEnabled;
+    // delete  cyjson.renderer;
+    // // Separate download function for style
+    delete cyjson.style
+    // blob and save
+    var cyblob = new Blob([JSON.stringify(cyjson)], {type: "application/json;charset=utf-8"});
+    saveAs(cyblob, `dgca_${run_timestamp}_step${TIMESTEP}.json`);
+    // TODO: should we allow saving of just selected component?
+    // Not really needed because you can just open it in new window and save from there.
+}
+
+function saveStyleJSON() {
+    var styjson = cy.style().json();
+    var styblob = new Blob([JSON.stringify(styjson)], {type: "application/json;charset=utf-8"});
+    saveAs(styblob, `dgca_style.json`); // doesn't need a unique filename as this will always be the same.
 }
 
 function getTimestamp() {

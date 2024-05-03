@@ -302,17 +302,22 @@
             </tr>
             <tr>
                 <td>
-                    <button type="button" title="Download a PNG image of the current view" id="save_img_button">Save Image</button><br>
+                    Save graph:
                 </td>
                 <td>
-                    <button type="button" title="Not sure what this should do - save JSON of graph?" id="save_graph_button" disabled>Save Graph</button><br>
+                    <button type="button" title="Download a PNG image of the current view" id="save_img_button">Save Image</button><br>
+                    <button type="button" title="Download JSON representation of the current graph (cytoscape format)" id="save_graph_button">Save Graph JSON</button><br>
+                    <button type="button" title="Download Cytoscape style info JSON" id="save_style_button">Save Style JSON</button><br>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <span title="Select or deselect components by double clicking. Multiple components may be selected.">Selected component(s) (double click):</span>
+                    <span title="Select or deselect components by double clicking. Multiple components may be selected.">Component(s): (de)select by double-clicking</span>
                 </td>
                 <td>
+                    <!-- <button type="button" id="count-components" title="Count the number of detached components in the current graph">Count</button>
+                    <span id="component-count">?</span>
+                    <br> -->
                     <button type="button" id="isolate-component" title="Isolate component. WARNING! This wil remove all non-selected components">Isolate</button><br>
                     <button type="button" id="newtab-component" title="Open selected component in new tab">Open in new tab</button>
                 </td>
@@ -321,7 +326,7 @@
                 <td>
                 </td>
                 <td>
-                    <button type="button" id="show-stats-button" title="Show node count and component count" onclick="showHidePopup('stats-popup'); populateStatsTable()">Show stats</button> 
+                    <button type="button" id="show-stats-button" title="Show node count and component count" onclick="showHidePopup('stats-popup');">Show stats</button> 
                 </td>
             </tr>
         </table>
