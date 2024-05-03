@@ -73,7 +73,7 @@
     .accordion:hover {
         background-color: gray;
     }
-    .active:after {
+    .accordion.active:after {
         content: "-"; /* Unicode character for "minus" sign (-) */
     }
 
@@ -98,12 +98,9 @@
         border: 2px solid white;
         background-color: gray;
         z-index: 9;
-        opacity: 0;
     }
     .popup-window.active {
         display: block;
-        opacity: 1;
-        transition: opacity 1s linear;
     }
     .close-popup-window {
         float: right;
@@ -214,7 +211,7 @@
                     <span title="Choose a starting graph.">Seed graph:</span>
                 </td>
                 <td>
-                    <select id="seed-graph-dropdown" onchange="if (this.value=='custom') showHideForm();">
+                    <select id="seed-graph-dropdown" onchange="if (this.value=='custom-JSON') showHidePopup('json-settings-popup');">
                         <option title="Single node with a self-loop" value="single_node">Single Node</option>
                         <option title="Four nodes connected in a unidirectional ring" value="ring4" >Ring of 4</option>
                         <option title="A four node 'arow' graph" value="arrow" selected>Arrow</option>
@@ -235,7 +232,7 @@
                     Alternatively, paste in JSON Settings:
                 </td>
                 <td>
-                    <button type="button" id="open_settings_button" onclick="showHideForm()">Open JSON Settings</button>
+                    <button type="button" id="open_settings_button" onclick="showHidePopup('json-settings-popup'); console.log('bhbkh')">Open JSON Settings</button>
                 </td>
             </tr>
           </table>
@@ -320,6 +317,13 @@
                     <button type="button" id="newtab-component" title="Open selected component in new tab">Open in new tab</button>
                 </td>
             </tr>
+            <tr>
+                <td>
+                </td>
+                <td>
+                    <button type="button" id="show-stats-button" title="Show node count and component count" onclick="showHidePopup('stats-popup'); populateStatsTable()">Show stats</button> 
+                </td>
+            </tr>
         </table>
     </div>
 </div>
@@ -333,8 +337,8 @@
     </div>
 </div>
 
-<div class="popup-window" id="myForm">
-    <button type="button" class="close-popup-window" onclick="showHideForm()">x</button>
+<div class="popup-window" id="json-settings-popup">
+    <button type="button" class="close-popup-window" onclick="this.parentElement.classList.toggle('active');">x</button>
     <form class="form-container">
         <h3>Settings</h3>
         <p>Copy or paste settings below in JSON format with fields "num_states", "rule_weights" and "seed_graph".</p>
@@ -347,10 +351,8 @@
     </form>
 </div>
 
-<div class="maincontent" id="cy">
-    <!--<h1>Graph</h1>-->
-</div>
-<div class="footer">
+<div class="popup-window" id="stats-popup" style="width: 20%;">
+    <button type="button" class="close-popup-window" onclick="this.parentElement.classList.toggle('active');">x</button>
     <table>
         <tr>
             <td>
@@ -379,6 +381,11 @@
     </table>
 </div>
 
+<div class="maincontent" id="cy">
+    <!--<h1>Graph</h1>-->
+</div>
+
+
 <script>
     var acc = document.getElementsByClassName("accordion");
     var i;
@@ -393,8 +400,8 @@
         }
         });
     }
-    function showHideForm() {
-        document.getElementById("myForm").classList.toggle('active');
+    function showHidePopup(popupID) {
+        document.getElementById(popupID).classList.toggle('active');
     }
     const COLOURS = ["#e60049", "#0bb4ff", "#e6d800", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
     function stateColourDots(num) {

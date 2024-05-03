@@ -210,6 +210,7 @@ function initPage() {
     });
     if (CHILD_WINDOW) {
         // Bit of a roundabout way of doing it, but re-uses existing code.
+        //console.log(window.passed);
         json_settings_textarea.value = window.passed;
         submitJSONSettings();
     }
@@ -334,7 +335,7 @@ function submitJSONSettings() {
     // get whatever is in the seetings textarea
     // TODO: some error checking (eg. check rule matrix is the right size)
     var settings = JSON.parse(json_settings_textarea.value);
-    console.log('submitjsonsettings');
+    //console.log('submitjsonsettings');
     num_states_dropdown.value = settings.num_states; // first set the dropdown to the correct value
     model_version_dropdown.value = settings.version;
     initNumStates(); // gets values from the dropdowns
@@ -490,7 +491,6 @@ function getDirectedNeighbourStateCounts(node) {
         counts['out'][st] = node.outgoers().nodes(`node[state="${st}"]`).length;
         counts['in'][st] = node.incomers().nodes(`node[state="${st}"]`).length;
     });
-    //console.log('hello');
     return counts
 }
 
@@ -551,9 +551,7 @@ function dgcaStep() {
     current_nodes.forEach(function (nd) {
         var nd_id = nd.data('id');
         var inp_vec = getNeighbourhoodLaplacianVector(nd);
-        //RULE.shape.length === 2 && inp_vec.shape.length === 1 && RULE.shape[1] === inp_vec.shape[0]
-        console.log(`matmul ${RULE.shape} x ${inp_vec.shape}, is ok? ${RULE.shape.length === 2 && inp_vec.shape.length === 1 && RULE.shape[1] === inp_vec.shape[0]}`);
-        console.log(nj.dot(RULE, inp_vec));
+        //console.log(`matmul ${RULE.shape} x ${inp_vec.shape}, is ok? ${RULE.shape.length === 2 && inp_vec.shape.length === 1 && RULE.shape[1] === inp_vec.shape[0]}`);
         var out_vec = nj.tanh(nj.dot(RULE, inp_vec));
         if (VERSION == 'v2') {
             var result = argMax(out_vec);
@@ -778,7 +776,7 @@ function stepForward() {
         console.log('Next step already calculated');
         // because cy.json(...) only updates the specified fields if the 'next' json has no 'next' field of its own
         // it will continue to reference *this* next json. So then we need to manually remove the field.
-        console.log(cy.data());
+        //console.log(cy.data());
         var has_next_next = (('next' in cy.data('next')) && (cy.data('next')['next'] != null));
         cy.json(cy.data('next'));
         if (!has_next_next) {
@@ -790,7 +788,7 @@ function stepForward() {
     }
     step_count_info.innerHTML = TIMESTEP;
     node_count_info.innerHTML = cy.nodes().length;
-    component_count_info.innerHTML = cy.elements().components().length;
+    //component_count_info.innerHTML = cy.elements().components().length; // This is v slow (takes 15% of time), so prob don't want to call it every step
     cy.$('.component-selected').removeClass('component-selected');
 }
 
@@ -807,7 +805,7 @@ function stepBack() {
     redoLayout(false);
     step_count_info.innerHTML = TIMESTEP;
     node_count_info.innerHTML = cy.nodes().length;
-    component_count_info.innerHTML = cy.elements().components().length;
+    //component_count_info.innerHTML = cy.elements().components().length; // This is v slow (takes 15% of time), so prob don't want to call it every step
     cy.$('.component-selected').removeClass('component-selected');
 }
 
@@ -891,6 +889,12 @@ function createSLPDiagram() {
     nodes.push({data: {id: 'Remove', value: 0, row: NUMSTATES+1, col: 1}});
     nodes.push({data: {id: 'Divide', value: 0, row: NUMSTATES+2, col: 1}});
     return {nodes: nodes, edges: edges};
+}
+
+function populateStatsTable() {
+    step_count_info.innerHTML = TIMESTEP;
+    node_count_info.innerHTML = cy.nodes().length;;
+    component_count_info.innerHTML = cy.elements().components().length;
 }
 
 // Add neural net diagram in side panel
