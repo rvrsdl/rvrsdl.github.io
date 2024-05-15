@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<title>DGCA</title>
+<link rel="icon" type="image/x-icon" href="dgca32.ico">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        background-color: black;
+        color: white;
+    }
+    .maincontent {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+    }
+    /*Centre this button*/
+    .major-button {
+        display: inline;
+        margin: auto;
+        font-size:16px;
+        padding:10px;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        
+    }
+    /* tr:nth-child(even) {background-color: black;} */
+    th,td {
+        border-bottom: 1px solid #ddd;
+        padding: 6px;
+    }
+    textarea {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .minibox {
+        z-index: 2;
+        position: relative;
+        top: 20px;
+        left: 20px;
+        width: 275px;
+        background-color: rgba(0, 0, 0, 0.4);
+        border: 1px solid white;
+        padding: 0px;
+        transition: left 0.3s ease;
+    }
+     /* Style the buttons that are used to open and close the accordion panel */
+    .accordion {
+        background-color: black;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 6px;
+        width: 100%;
+        text-align: left;
+        border: 1px solid white;
+        outline: none;
+        transition: 0.4s;
+    }
+    .accordion:after {
+        content: "+"; /* Unicode character for "plus" sign (+) */
+        float: right;
+        margin-left: 5px;
+    }
+    /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+    .accordion:hover {
+        background-color: gray;
+    }
+    .accordion.active:after {
+        content: "-"; /* Unicode character for "minus" sign (-) */
+    }
+
+    /* Style the accordion panel. Note: hidden by default */
+    .panel {
+        padding: 0;
+        /* background-color: rgb(0, 0, 0); */
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+    }
+    .settings{
+        padding: 6px;
+    }
+    .popup-window {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40%;
+        border: 2px solid white;
+        background-color: gray;
+        z-index: 9;
+    }
+    .popup-window.active {
+        display: block;
+    }
+    .close-popup-window {
+        float: right;
+        font-size: 16px;
+        margin: 2px;
+        outline: none;
+        cursor: pointer;
+        background-color: gray;
+        color: white;
+        border: none;
+    }
+    .form-container {
+        padding: 6px;
+    }
+    #state-colour-dots {
+        font-size: 24px;
+        word-wrap: break-word;
+    }
+    .footer{
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+    }
+    .hover_img { position:relative; }
+    .hover_img span { position:absolute; display:none; z-index:99; }
+    .hover_img:hover span { display:block; background-color: gray}
+    
+</style>
+<!-- NumJS -->
+<script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script>
+<!-- Cytoscape -->
+<script src="https://unpkg.com/cytoscape@3.29.2/dist/cytoscape.min.js"></script>
+<!-- For fcose layout: -->
+<script src="https://unpkg.com/layout-base/layout-base.js"></script>
+<script src="https://unpkg.com/cose-base/cose-base.js"></script>
+<script src="https://unpkg.com/cytoscape-fcose/cytoscape-fcose.js"></script>
+<!--Popper and Tippy for popups  on nodes -->
+<script src="https://unpkg.com/popper.js@1.14.7/dist/umd/popper.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-popper@1.0.4/cytoscape-popper.min.js"></script>
+<script src="https://unpkg.com/tippy.js@4.0.1/umd/index.all.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@4.0.1/index.css" />
+<!--For some icons -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<!-- To save images-->
+<script src=" https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<!--For cosmos-->
+<!-- <script src=" https://cdn.jsdelivr.net/npm/@cosmograph/cosmos@1.6.0/dist/index.min.js "></script> -->
+<!--For doubleclick event on nodes-->
+<script src="https://unpkg.com/cytoscape-dblclick/dist/index.js"></script>
+<body>
+
+
+<div class="maincontent" id="cy">
+    <!--<h1>Graph</h1>-->
+</div>
+
+
+<script src="trajectory.js"></script>
+</body>
+</html> 

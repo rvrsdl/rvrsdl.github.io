@@ -231,7 +231,11 @@
                 <td>
                     <select id="presets-dropdown">
                         <option title="" value="no_preset" selected>-</option>
-                        <option title="Example showing a complex hypercycle" value="hypercycle">Hypercycle</option>
+                        <option title="Example showing a self-reproduction" value="reproduction1">Self-reproduction</option>
+                        <option title="Example showing a simpler hypercycle" value="hypercycle2">Short Hypercycle</option>
+                        <option title="Example showing a complex hypercycle" value="hypercycle1">Long Hypercycle</option>
+                        <option title="A line which grows forever" value="line">Line</option>
+                        <option title="Creates clusters with sparse connections between them." value="clusters">Clusters</option>
                     </select>
                 </td>
             </tr>
@@ -324,9 +328,10 @@
             </tr>
             <tr>
                 <td>
+                    <button type="button" id="show-stats-button" title="Show node count and component count" onclick="showHidePopup('stats-popup');">Show stats</button> 
                 </td>
                 <td>
-                    <button type="button" id="show-stats-button" title="Show node count and component count" onclick="showHidePopup('stats-popup');">Show stats</button> 
+                    <button type="button" id="show-record-popup-button" title="Add selected component(s) to trajectory" onclick="showHidePopup('record-popup');">Record</button> 
                 </td>
             </tr>
         </table>
@@ -387,10 +392,26 @@
     </table>
 </div>
 
+
+<div class="popup-window" id="record-popup">
+    <button type="button" class="close-popup-window" onclick="this.parentElement.classList.toggle('active');">x</button>
+    <form class="form-container">
+        <h3>Record selected component(s)</h3>
+        <label for="record-step-name">Step name:</label>
+        <input type="text" id="record-step-name" name="record-step-name">
+        <br>
+        <button type="button" id="record-add-button">Add</button>
+    </form>
+</div>
+
+
 <div class="maincontent" id="cy">
     <!--<h1>Graph</h1>-->
 </div>
 
+<div class="footer" id="footer">
+    Timestep: <span id="step-count-footer">0</span>
+</div>
 
 <script>
     var acc = document.getElementsByClassName("accordion");

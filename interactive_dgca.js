@@ -37,6 +37,7 @@ var anim_2step_checkbox = document.getElementById('anim-2step');
 var step_count_info = document.getElementById("step-count");
 var node_count_info = document.getElementById("node-count");
 var component_count_info = document.getElementById("component-count");
+var step_count_footer = document.getElementById("step-count-footer");
 
 document.getElementById("redo-layout").addEventListener("click", _ => redoLayout(true));
 document.getElementById("step_fwd").addEventListener("click", stepForward); //applyTransitions
@@ -57,6 +58,16 @@ document.getElementById("isolate-component").addEventListener("click", isolateCo
 document.getElementById("newtab-component").addEventListener("click", newWindow);
 document.getElementById("show-stats-button").addEventListener("click", populateStatsTable);
 document.getElementById("presets-dropdown").addEventListener("change", evt => loadPreset(evt.target.value)) 
+
+
+//Keyboard controls
+document.addEventListener('keyup', (e) => {
+    console.log(e.code)
+    if (e.code === "Space")           toggleRun()
+    else if (e.code === "ArrowLeft")  stepBack()
+    else if (e.code === "ArrowRight") stepForward()
+    else if (e.code === "KeyR") redoLayout(true)
+  });
 
 var cy_style = [
     {
@@ -303,9 +314,10 @@ function initCytoscape() {
     //next_node_id = cyx.nodes().length; // reset node counter
     next_node_id = maxNodeID(cyx.nodes())+1; // works if we are in child window and have been passed a graph with high ids.
     TIMESTEP = 0;
-    step_count_info.innerHTML = TIMESTEP;
-    node_count_info.innerHTML = cyx.nodes().length;;
-    component_count_info.innerHTML = cyx.elements().components().length;
+    step_count_footer.innerHTML = TIMESTEP;
+    // step_count_info.innerHTML = TIMESTEP;
+    // node_count_info.innerHTML = cyx.nodes().length;;
+    // component_count_info.innerHTML = cyx.elements().components().length;
     run_timestamp = getTimestamp();
     return cyx
 }
@@ -625,7 +637,6 @@ function dgcaStep() {
     // console.log(split_flags);
 
     // May as well actually do it in same function!
-    TIMESTEP += 1;
     // CREATE NEW NODES
     // keep a ref to parent node (to make it easier to draw correct edges)
     var new_node_ids = [];
@@ -806,8 +817,10 @@ function stepForward() {
         //console.log('Calculating next step');
         dgcaStep();
     }
-    step_count_info.innerHTML = TIMESTEP;
-    node_count_info.innerHTML = cy.nodes().length;
+    TIMESTEP += 1;
+    step_count_footer.innerHTML = TIMESTEP;
+    //step_count_info.innerHTML = TIMESTEP;
+    //node_count_info.innerHTML = cy.nodes().length;
     //component_count_info.innerHTML = cy.elements().components().length; // This is v slow (takes 15% of time), so prob don't want to call it every step
     cy.$('.component-selected').removeClass('component-selected');
 }
@@ -823,8 +836,10 @@ function stepBack() {
         nd.removeClass('deleting');
     });
     redoLayout(false);
-    step_count_info.innerHTML = TIMESTEP;
-    node_count_info.innerHTML = cy.nodes().length;
+    TIMESTEP -= 1;
+    step_count_footer.innerHTML = TIMESTEP;
+    // step_count_info.innerHTML = TIMESTEP;
+    // node_count_info.innerHTML = cy.nodes().length;
     //component_count_info.innerHTML = cy.elements().components().length; // This is v slow (takes 15% of time), so prob don't want to call it every step
     cy.$('.component-selected').removeClass('component-selected');
 }
