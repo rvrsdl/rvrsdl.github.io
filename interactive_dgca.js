@@ -56,6 +56,7 @@ document.getElementsByName("selfloop-style").forEach((btn) => {
 document.getElementById("isolate-component").addEventListener("click", isolateComponent);
 document.getElementById("newtab-component").addEventListener("click", newWindow);
 document.getElementById("show-stats-button").addEventListener("click", populateStatsTable);
+document.getElementById("presets-dropdown").addEventListener("change", evt => loadPreset(evt.target.value)) 
 
 var cy_style = [
     {
@@ -338,6 +339,7 @@ function submitJSONSettings() {
     // get whatever is in the seetings textarea
     // TODO: some error checking (eg. check rule matrix is the right size)
     var settings = JSON.parse(json_settings_textarea.value);
+    console.log(json_settings_textarea.value);
     //console.log('submitjsonsettings');
     num_states_dropdown.value = settings.num_states; // first set the dropdown to the correct value
     model_version_dropdown.value = settings.version;
@@ -348,6 +350,20 @@ function submitJSONSettings() {
     setJSONSettings(); // just to reformat the input nicely
     resetCytoscape();
     refreshEvents();
+}
+
+function loadPreset(name) {
+    // Loads one of the preset JSON files.
+    console.log(`Loading preset ${name}`)
+    //var settings = require(`./presets/${name}.json`);
+    if (name!='no_preset') {
+        settings = fetch(`./presets/${name}.json`)
+        .then(response => response.json())
+        //.then(json => console.log(json));
+        .then(json => (json_settings_textarea.value=JSON.stringify(json)))
+        .then(_ => submitJSONSettings());
+        // Slightly convoluted to first paste settings into text area then call submitJSONSettings to read from there, but it ensures they are in sync.
+    }
 }
 
 function submitDropdownSettings() {
@@ -510,9 +526,10 @@ function getNeighbourhoodCountVector(node) {
     var vec = nj.array(counts);
     return vec
 }
+// TODO: Write another function like this whihc also stacks own state (as in ALife 2024 paper)
 
 function getNeighbourhoodLaplacianVector(node) {
-    // returns a NumJS array of bidirectional Laplacian filtered counts (as in ALife paper)
+    // returns a NumJS array of bidirectional Laplacian filtered counts (as in ALife 2023 papers)
     // ie. if the central node is in state A:
     // [in_deg(node)-in_A, -in_B,... out_deg(A)-out_A, -out_B,... bias(1)]
     var counts = []
@@ -553,7 +570,7 @@ function dgcaStep() {
     cy.startBatch();
     current_nodes.forEach(function (nd) {
         var nd_id = nd.data('id');
-        var inp_vec = getNeighbourhoodLaplacianVector(nd);
+        var inp_vec = getNeighbourhoodLaplacianVector(nd); // TODO: Hmm do I still want to be doing this?
         //console.log(`matmul ${RULE.shape} x ${inp_vec.shape}, is ok? ${RULE.shape.length === 2 && inp_vec.shape.length === 1 && RULE.shape[1] === inp_vec.shape[0]}`);
         var out_vec = nj.tanh(nj.dot(RULE, inp_vec));
         if (VERSION == 'v2') {
@@ -929,21 +946,21 @@ function newWindow() {
     new_window.passed = JSON.stringify({ version: VERSION, num_states: NUMSTATES, rule: RULE, seed_graph: eles_json, next_node_id: next_node_id });
 }
 
-function createSLPDiagram() {
-    var nodes = [];
-    var edges = [];
-    for (let i=0; i<NUMSTATES; i++) {
-        nodes.push({data: {id: ALLSTATES[i]+'_in',  value: 0, row: i, col: 0}});
-        nodes.push({data: {id: ALLSTATES[i]+'_out', value: 0, row: i+NUMSTATES, col: 0}});
-        nodes.push({data: {id: 'State'+ALLSTATES[i], value: 0, row: i, col: 1}});
-    }
-    // For v2
-    nodes.push({data: {id: 'bias', value: 0, row: NUMSTATES*2, col: 0}});
-    nodes.push({data: {id: 'Keep', value: 0, row: NUMSTATES, col: 1}});
-    nodes.push({data: {id: 'Remove', value: 0, row: NUMSTATES+1, col: 1}});
-    nodes.push({data: {id: 'Divide', value: 0, row: NUMSTATES+2, col: 1}});
-    return {nodes: nodes, edges: edges};
-}
+// function createSLPDiagram() {
+//     var nodes = [];
+//     var edges = [];
+//     for (let i=0; i<NUMSTATES; i++) {
+//         nodes.push({data: {id: ALLSTATES[i]+'_in',  value: 0, row: i, col: 0}});
+//         nodes.push({data: {id: ALLSTATES[i]+'_out', value: 0, row: i+NUMSTATES, col: 0}});
+//         nodes.push({data: {id: 'State'+ALLSTATES[i], value: 0, row: i, col: 1}});
+//     }
+//     // For v2
+//     nodes.push({data: {id: 'bias', value: 0, row: NUMSTATES*2, col: 0}});
+//     nodes.push({data: {id: 'Keep', value: 0, row: NUMSTATES, col: 1}});
+//     nodes.push({data: {id: 'Remove', value: 0, row: NUMSTATES+1, col: 1}});
+//     nodes.push({data: {id: 'Divide', value: 0, row: NUMSTATES+2, col: 1}});
+//     return {nodes: nodes, edges: edges};
+// }
 
 function populateStatsTable() {
     step_count_info.innerHTML = TIMESTEP;

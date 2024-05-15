@@ -189,17 +189,6 @@
             </tr>
             <tr>
                 <td>
-                    <span title="Choose the rule weights which control development. Random or a preset example.">Model weights:</span>
-                </td>
-                <td>
-                    <select id="rule-dropdown">
-                        <option title="Random weights" value="Random" selected>Random</option>
-                        <option title="Example showing self-reproduction" value="eg1-reproduction">Reproduction</option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
                     Model description:
                 </td>
                 <td style="font-style: italic;">
@@ -232,7 +221,18 @@
                     Alternatively, paste in JSON Settings:
                 </td>
                 <td>
-                    <button type="button" id="open_settings_button" onclick="showHidePopup('json-settings-popup'); console.log('bhbkh')">Open JSON Settings</button>
+                    <button type="button" id="open_settings_button" onclick="showHidePopup('json-settings-popup');">Open JSON Settings</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    OR choose from presets:
+                </td>
+                <td>
+                    <select id="presets-dropdown">
+                        <option title="" value="no_preset" selected>-</option>
+                        <option title="Example showing a complex hypercycle" value="hypercycle">Hypercycle</option>
+                    </select>
                 </td>
             </tr>
           </table>
@@ -336,6 +336,7 @@
 <div class="minibox">
     <button class="accordion">Info</button>
     <div class="panel">
+        Work in progress!
         <div id="cy-nn" style="height: 500px; width: 275px">
 
         </div>
@@ -422,11 +423,5 @@
 <!-- <script src="dgca_v3.js"></script>
 <script src="main.js"></script> -->
 <script src="interactive_dgca.js"></script>
-<script>
-    // testing load data
-    fetch("examples/nice.json")
-        .then(response => response.json())
-        .then(json => json_settings_textarea.value=JSON.stringify(json));
-</script>
 </body>
 </html> 
