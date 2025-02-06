@@ -26,7 +26,7 @@
         color: white;
         font-family: "Lucida Console", "Courier New", monospace;
     }
-    p {
+    p a {
         color: white;
         text-align: left;
         font-family: "Lucida Console", "Courier New", monospace;
@@ -43,9 +43,7 @@
     </style>
 </head>
 <body>
-    <canvas id="bg-canvas">
-        Blah
-    </canvas>
+    <canvas id="networkCanvas"></canvas>
     <!-- <h1>Riversdale Waldegrave</h1>
     <p>
         I am a PhD student at the University of York.
@@ -54,7 +52,7 @@
     <p><a href="./neurogram.html">Neurogram</a></p>
     <p><a href="./interactive_dgca.html">Interactive DGCA</a></p>
     <p><a href="./interactive_dgca_OLD.html">Interactive DGCA (old version)</a></p>
-    <script type="text/javascript">
+    <!-- <script type="text/javascript">
       var c = document.getElementById("bg-canvas");
       var ctx = c.getContext("2d");
       var grd = ctx.createLinearGradient(0, 0, 600, 600);
@@ -64,13 +62,15 @@
 
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, 600, 600);
-    </script>
+    </script> -->
 
 </body>
 <!-- <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
 <script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cytoscape-cola@2.2.3/cytoscape-cola.min.js"></script>
 <script src="index.js"></script> -->
-<script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script> -->
 <!-- <script src="neurogram.js"></script> -->
+<script src="background_graph.js"></script>
+
 </html>
