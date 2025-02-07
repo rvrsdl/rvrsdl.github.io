@@ -303,6 +303,17 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+// On mobile, use double tap to toggle view.
+let lastTap = 0;
+document.addEventListener('touchend', (event) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    if (tapLength < 300 && tapLength > 0) {
+        toggleCameraMode(null);
+    }
+    lastTap = currentTime;
+});
+
 // Render loop
 function animate() {
     requestAnimationFrame(animate);
