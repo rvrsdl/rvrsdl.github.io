@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Interactive Lyapunov Fractal</title>
+
+    <!-- iOS Web App Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+    <meta name="apple-mobile-web-app-title" content="Lyapunov Fractal">
+
+    <!-- PWA Theme Color -->
+    <meta name="theme-color" content="#000000">
     <style>
         * {
             margin: 0;
@@ -53,8 +61,7 @@
         <div>Touch/Mouse Position: <span id="mousePos">Center</span></div>
         <div>C Parameter: <span id="cParam">3.85</span></div>
         <div>D Parameter: <span id="dParam">3.85</span></div>
-        <div style="margin-top: 8px; opacity: 0.7;">Press 'H' or double-tap to toggle info</div>
-        <div style="opacity: 0.7;">Press 'F' for fullscreen</div>
+        <div id="controls" style="margin-top: 8px; opacity: 0.7;"></div>
     </div>
 
     <!-- Vertex Shader -->
@@ -76,7 +83,7 @@
         // Configuration
         #define SEQUENCE_LENGTH 6
         #define N_SKIP 50
-        #define N_ITERATIONS 500
+        #define N_ITERATIONS 100
         #define MIN_DERIVATIVE 1e-10
 
         // Parameter ranges
@@ -216,6 +223,7 @@
         const mousePosEl = document.getElementById('mousePos');
         const cParamEl = document.getElementById('cParam');
         const dParamEl = document.getElementById('dParam');
+        const controlsEl = document.getElementById('controls');
 
         // TODO: can we set these vals in the shader script.
         const C_MIN = 3.7
@@ -303,6 +311,13 @@
         let lastTapTime = 0;
         const DOUBLE_TAP_DELAY = 300; // ms
 
+        // Set control instructions based on device type
+        if (isMobile) {
+            controlsEl.innerHTML = 'Double-tap to toggle info & fullscreen';
+        } else {
+            controlsEl.innerHTML = 'Press \'H\' to toggle info<br>Press \'F\' for fullscreen';
+        }
+
         // Handle window resize
         function resize() {
             canvas.width = window.innerWidth;
@@ -377,8 +392,33 @@
             const currentTime = Date.now();
             const tapLength = currentTime - lastTapTime;
             if (tapLength < DOUBLE_TAP_DELAY && tapLength > 0) {
-                // Double tap detected
+                // Double tap detected - toggle info and fullscreen
                 info.classList.toggle('hidden');
+
+                // Toggle fullscreen on mobile
+                if (!document.fullscreenElement) {
+                    // Enter fullscreen
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    } else if (document.documentElement.webkitRequestFullscreen) {
+                        document.documentElement.webkitRequestFullscreen();
+                    } else if (document.documentElement.mozRequestFullScreen) {
+                        document.documentElement.mozRequestFullScreen();
+                    } else if (document.documentElement.msRequestFullscreen) {
+                        document.documentElement.msRequestFullscreen();
+                    }
+                } else {
+                    // Exit fullscreen
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
             }
             lastTapTime = currentTime;
         }, { passive: false });
