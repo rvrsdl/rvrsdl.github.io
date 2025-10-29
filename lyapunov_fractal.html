@@ -50,10 +50,10 @@
         <div>Sequence: AABCAD</div>
         <div>A range (horizontal): 1.8-4.0</div>
         <div>B range (vertical): 1.8-4.0</div>
-        <div>Mouse Position: <span id="mousePos">Center</span></div>
+        <div>Touch/Mouse Position: <span id="mousePos">Center</span></div>
         <div>C Parameter: <span id="cParam">3.85</span></div>
         <div>D Parameter: <span id="dParam">3.85</span></div>
-        <div style="margin-top: 8px; opacity: 0.7;">Press 'H' to hide/show info</div>
+        <div style="margin-top: 8px; opacity: 0.7;">Press 'H' or double-tap to toggle info</div>
         <div style="opacity: 0.7;">Press 'F' for fullscreen</div>
     </div>
 
@@ -294,9 +294,14 @@
         const iMouseLocation = gl.getUniformLocation(program, 'iMouse');
         const iTimeLocation = gl.getUniformLocation(program, 'iTime');
 
-        // Mouse state
+        // Mouse/Touch state
         let mouse = { x: -1, y: -1, clickX: 0, clickY: 0 };
         let mousePressed = false;
+        let isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Double tap detection
+        let lastTapTime = 0;
+        const DOUBLE_TAP_DELAY = 300; // ms
 
         // Handle window resize
         function resize() {
@@ -305,11 +310,11 @@
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
 
-        // Mouse event handlers
-        canvas.addEventListener('mousemove', (e) => {
+        // Update mouse/touch position and display
+        function updatePosition(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = canvas.height - (e.clientY - rect.top); // Flip Y coordinate
+            mouse.x = clientX - rect.left;
+            mouse.y = canvas.height - (clientY - rect.top); // Flip Y coordinate
 
             // Update info display
             const mouseUV = {
@@ -318,7 +323,7 @@
             };
 
             const c = C_MIN + mouseUV.x * (C_MAX - C_MIN);
-            const d = D_MIN + mouseUV.y * (D_MAX - D_MIN)
+            const d = D_MIN + mouseUV.y * (D_MAX - D_MIN);
 
             mousePosEl.textContent = `(${Math.round(mouse.x)}, ${Math.round(canvas.height - mouse.y)})`;
             cParamEl.textContent = c.toFixed(4);
@@ -328,21 +333,73 @@
                 mouse.clickX = 1;
                 mouse.clickY = 1;
             }
+        }
+
+        // Mouse event handlers
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isMobile) {
+                updatePosition(e.clientX, e.clientY);
+            }
         });
 
         canvas.addEventListener('mousedown', () => {
-            mousePressed = true;
-            mouse.clickX = 1;
-            mouse.clickY = 1;
+            if (!isMobile) {
+                mousePressed = true;
+                mouse.clickX = 1;
+                mouse.clickY = 1;
+            }
         });
 
         canvas.addEventListener('mouseup', () => {
-            mousePressed = false;
+            if (!isMobile) {
+                mousePressed = false;
+            }
         });
 
         canvas.addEventListener('mouseleave', () => {
-            mousePressed = false;
+            if (!isMobile) {
+                mousePressed = false;
+            }
         });
+
+        // Touch event handlers
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                updatePosition(touch.clientX, touch.clientY);
+                mousePressed = true;
+                mouse.clickX = 1;
+                mouse.clickY = 1;
+            }
+
+            // Double tap detection
+            const currentTime = Date.now();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < DOUBLE_TAP_DELAY && tapLength > 0) {
+                // Double tap detected
+                info.classList.toggle('hidden');
+            }
+            lastTapTime = currentTime;
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                updatePosition(touch.clientX, touch.clientY);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            mousePressed = false;
+        }, { passive: false });
+
+        canvas.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            mousePressed = false;
+        }, { passive: false });
 
         // Keyboard handler for hiding/showing info and fullscreen
         document.addEventListener('keydown', (e) => {
@@ -403,3 +460,4 @@
     </script>
 </body>
 </html>
+
