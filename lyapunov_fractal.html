@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lyapunov Fractal Explorer</title>
+    <title>Interactive Lyapunov Fractal</title>
     <style>
         * {
             margin: 0;
@@ -46,8 +46,10 @@
 <body>
     <canvas id="canvas"></canvas>
     <div id="info">
-        <div>Lyapunov Fractal Explorer</div>
+        <div>Lyapunov Fractal</div>
         <div>Sequence: AABCAD</div>
+        <div>A range (horizontal): 2.0-4.0</div>
+        <div>B range (vertical): 2.0-4.0</div>
         <div>Mouse Position: <span id="mousePos">Center</span></div>
         <div>C Parameter: <span id="cParam">3.85</span></div>
         <div>D Parameter: <span id="dParam">3.85</span></div>
@@ -83,9 +85,9 @@
         #define B_MIN 2.0
         #define B_MAX 4.0
         #define C_MIN 3.7
-        #define C_MAX 4.0
+        #define C_MAX 4.01
         #define D_MIN 3.7
-        #define D_MAX 4.0
+        #define D_MAX 4.01
 
         // Get sequence value at index (AABCAD pattern: 0,0,1,2,0,3)
         int getSequenceValue(int i) {
@@ -215,6 +217,12 @@
         const cParamEl = document.getElementById('cParam');
         const dParamEl = document.getElementById('dParam');
 
+        // TODO: can we set these vals in the shader script.
+        const C_MIN = 3.7
+        const C_MAX = 4.01
+        const D_MIN = 3.7
+        const D_MAX = 4.01
+
         // Initialize WebGL context
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
@@ -309,8 +317,8 @@
                 y: mouse.y / canvas.height
             };
 
-            const c = 3.8 + mouseUV.x * 0.1;
-            const d = 3.8 + mouseUV.y * 0.1;
+            const c = C_MIN + mouseUV.x * (C_MAX - C_MIN);
+            const d = D_MIN + mouseUV.y * (D_MAX - D_MIN)
 
             mousePosEl.textContent = `(${Math.round(mouse.x)}, ${Math.round(canvas.height - mouse.y)})`;
             cParamEl.textContent = c.toFixed(4);
