@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyapunov Fractal Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        #info.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="info">
+        <div>Lyapunov Fractal Explorer</div>
+        <div>Sequence: AABCAD</div>
+        <div>Mouse Position: <span id="mousePos">Center</span></div>
+        <div>C Parameter: <span id="cParam">3.85</span></div>
+        <div>D Parameter: <span id="dParam">3.85</span></div>
+        <div style="margin-top: 8px; opacity: 0.7;">Press 'H' to hide/show info</div>
+        <div style="opacity: 0.7;">Press 'F' for fullscreen</div>
+    </div>
+
+    <!-- Vertex Shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision highp float;
+
+        uniform vec2 iResolution;
+        uniform vec4 iMouse;
+        uniform float iTime;
+
+        // Configuration
+        #define SEQUENCE_LENGTH 6
+        #define N_SKIP 50
+        #define N_ITERATIONS 100
+        #define MIN_DERIVATIVE 1e-10
+
+        // Parameter ranges
+        #define A_MIN 2.0
+        #define A_MAX 4.0
+        #define B_MIN 2.0
+        #define B_MAX 4.0
+        #define C_MIN 3.7
+        #define C_MAX 4.0
+        #define D_MIN 3.7
+        #define D_MAX 4.0
+
+        // Get sequence value at index (AABCAD pattern: 0,0,1,2,0,3)
+        int getSequenceValue(int i) {
+            int idx = int(mod(float(i), 6.0));
+            if (idx == 0) return 0;
+            else if (idx == 1) return 0;
+            else if (idx == 2) return 1;
+            else if (idx == 3) return 2;
+            else if (idx == 4) return 0;
+            else return 3;
+        }
+
+        // Get parameter value by index
+        float getParam(int idx, float a, float b, float c, float d) {
+            if (idx == 0) return a;
+            else if (idx == 1) return b;
+            else if (idx == 2) return c;
+            else return d;
+        }
+
+        // Calculate Lyapunov exponent for given parameters a, b, c, d
+        float lyapunovExponent(float a, float b, float c, float d) {
+            float x = 0.5;
+            float lyapSum = 0.0;
+
+            // Skip transient iterations
+            for (int i = 0; i < N_SKIP; i++) {
+                int paramIndex = getSequenceValue(i);
+                float r = getParam(paramIndex, a, b, c, d);
+                x = r * x * (1.0 - x);
+
+                if (x <= 0.0 || x >= 1.0) {
+                    return -10.0;
+                }
+            }
+
+            // Calculate Lyapunov exponent
+            for (int i = 0; i < N_ITERATIONS; i++) {
+                int paramIndex = getSequenceValue(i);
+                float r = getParam(paramIndex, a, b, c, d);
+                x = r * x * (1.0 - x);
+
+                if (x <= 0.0 || x >= 1.0) {
+                    return -10.0;
+                }
+
+                float derivative = abs(r * (1.0 - 2.0 * x));
+
+                if (derivative < MIN_DERIVATIVE) {
+                    return -10.0;
+                }
+
+                lyapSum += log(derivative);
+            }
+
+            return lyapSum / float(N_ITERATIONS);
+        }
+
+        // Get color by index
+        vec3 getColor(int idx) {
+            if (idx == 0) return vec3(0.980392, 0.972549, 0.458824);  // 0xfaf875
+            else if (idx == 1) return vec3(0.988235, 0.988235, 0.149020);  // 0xfcfc26
+            else if (idx == 2) return vec3(0.737255, 0.870588, 0.149020);  // 0xbcde26
+            else if (idx == 3) return vec3(0.360784, 0.784314, 0.388235);  // 0x5CC863
+            else if (idx == 4) return vec3(0.121569, 0.627451, 0.533333);  // 0x1FA088
+            else if (idx == 5) return vec3(0.200000, 0.388235, 0.552941);  // 0x33638D
+            else if (idx == 6) return vec3(0.239216, 0.258824, 0.521569);  // 0x3D4285
+            else if (idx == 7) return vec3(0.121569, 0.007843, 0.411765);  // 0x1F0269
+            else if (idx == 8) return vec3(0.145098, 0.007843, 0.301961);  // 0x25024D
+            else if (idx == 9) return vec3(0.262745, 0.027451, 0.529412);  // 0x430787
+            else if (idx == 10) return vec3(0.435294, 0.000000, 0.658824); // 0x6F00A8
+            else if (idx == 11) return vec3(0.596078, 0.078431, 0.627451); // 0x9814A0
+            else if (idx == 12) return vec3(0.760784, 0.235294, 0.505882); // 0xC23C81
+            else if (idx == 13) return vec3(0.941176, 0.498039, 0.309804); // 0xF07F4F
+            else if (idx == 14) return vec3(0.992157, 0.698039, 0.184314); // 0xFDB22F
+            else return vec3(0.980392, 0.921569, 0.125490); // 0xFAEB20
+        }
+
+        // Color mapping function
+        vec3 colorMapHex(float x) {
+            const int colorCount = 16;
+            x *= float(colorCount);
+            int lo = int(mod(floor(x), float(colorCount)));
+            int hi = int(mod(floor(x) + 1.0, float(colorCount)));
+
+            return mix(getColor(lo), getColor(hi), fract(x));
+        }
+
+        void main() {
+            vec2 fragCoord = gl_FragCoord.xy;
+            vec2 uv = fragCoord / iResolution.xy;
+
+            // A and B parameters come from pixel coordinates
+            float a = A_MIN + uv.x * (A_MAX - A_MIN);
+            float b = B_MIN + uv.y * (B_MAX - B_MIN);
+
+            // C and D parameters come from mouse coordinates
+            vec2 mouseUV;
+            if (iMouse.z > 0.0) {
+                mouseUV = iMouse.xy / iResolution.xy;
+            } else {
+                mouseUV = vec2(0.5, 0.5);
+            }
+
+            float c = C_MIN + mouseUV.x * (C_MAX - C_MIN);
+            float d = D_MIN + mouseUV.y * (D_MAX - D_MIN);
+
+            // Calculate Lyapunov exponent with all four parameters
+            float lyap = lyapunovExponent(a, b, c, d);
+
+            // Normalize the value to [0, 1] range
+            float t = clamp((lyap + 2.0) / 3.0, 0.0, 1.0);
+
+            // Apply colormap
+            vec3 color = colorMapHex(t);
+
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <!-- JavaScript -->
+    <script>
+        // Get canvas and info elements
+        const canvas = document.getElementById('canvas');
+        const info = document.getElementById('info');
+        const mousePosEl = document.getElementById('mousePos');
+        const cParamEl = document.getElementById('cParam');
+        const dParamEl = document.getElementById('dParam');
+
+        // Initialize WebGL context
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+        if (!gl) {
+            alert('WebGL not supported in your browser');
+            throw new Error('WebGL not supported');
+        }
+
+        // Compile shader
+        function compileShader(source, type) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+
+            return shader;
+        }
+
+        // Create program
+        function createProgram(vertexShader, fragmentShader) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program linking error:', gl.getProgramInfoLog(program));
+                return null;
+            }
+
+            return program;
+        }
+
+        // Get shader sources
+        const vertexShaderSource = document.getElementById('vertex-shader').textContent;
+        const fragmentShaderSource = document.getElementById('fragment-shader').textContent;
+
+        // Compile shaders
+        const vertexShader = compileShader(vertexShaderSource, gl.VERTEX_SHADER);
+        const fragmentShader = compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+
+        // Create program
+        const program = createProgram(vertexShader, fragmentShader);
+        gl.useProgram(program);
+
+        // Create full-screen quad
+        const positions = new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+             1,  1
+        ]);
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        const positionLocation = gl.getAttribLocation(program, 'a_position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        // Get uniform locations
+        const iResolutionLocation = gl.getUniformLocation(program, 'iResolution');
+        const iMouseLocation = gl.getUniformLocation(program, 'iMouse');
+        const iTimeLocation = gl.getUniformLocation(program, 'iTime');
+
+        // Mouse state
+        let mouse = { x: -1, y: -1, clickX: 0, clickY: 0 };
+        let mousePressed = false;
+
+        // Handle window resize
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+
+        // Mouse event handlers
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = canvas.height - (e.clientY - rect.top); // Flip Y coordinate
+
+            // Update info display
+            const mouseUV = {
+                x: mouse.x / canvas.width,
+                y: mouse.y / canvas.height
+            };
+
+            const c = 3.8 + mouseUV.x * 0.1;
+            const d = 3.8 + mouseUV.y * 0.1;
+
+            mousePosEl.textContent = `(${Math.round(mouse.x)}, ${Math.round(canvas.height - mouse.y)})`;
+            cParamEl.textContent = c.toFixed(4);
+            dParamEl.textContent = d.toFixed(4);
+
+            if (!mousePressed) {
+                mouse.clickX = 1;
+                mouse.clickY = 1;
+            }
+        });
+
+        canvas.addEventListener('mousedown', () => {
+            mousePressed = true;
+            mouse.clickX = 1;
+            mouse.clickY = 1;
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            mousePressed = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            mousePressed = false;
+        });
+
+        // Keyboard handler for hiding/showing info and fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'h' || e.key === 'H') {
+                info.classList.toggle('hidden');
+            } else if (e.key === 'f' || e.key === 'F') {
+                // Toggle fullscreen
+                if (!document.fullscreenElement) {
+                    // Enter fullscreen
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    } else if (document.documentElement.webkitRequestFullscreen) {
+                        document.documentElement.webkitRequestFullscreen();
+                    } else if (document.documentElement.mozRequestFullScreen) {
+                        document.documentElement.mozRequestFullScreen();
+                    } else if (document.documentElement.msRequestFullscreen) {
+                        document.documentElement.msRequestFullscreen();
+                    }
+                } else {
+                    // Exit fullscreen
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            }
+        });
+
+        // Start time
+        const startTime = Date.now();
+
+        // Render loop
+        function render() {
+            const currentTime = (Date.now() - startTime) / 1000.0;
+
+            // Update uniforms
+            gl.uniform2f(iResolutionLocation, canvas.width, canvas.height);
+            gl.uniform4f(iMouseLocation, mouse.x, mouse.y, mouse.clickX, mouse.clickY);
+            gl.uniform1f(iTimeLocation, currentTime);
+
+            // Draw
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            requestAnimationFrame(render);
+        }
+
+        // Initialize
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Start rendering
+        render();
+    </script>
+</body>
+</html>
