@@ -49,19 +49,72 @@
         #info.hidden {
             display: none;
         }
+
+        #sequenceControls {
+            margin-top: 10px;
+            pointer-events: auto;
+        }
+
+        #sequenceControls input {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 4px 6px;
+            width: 100px;
+            text-transform: uppercase;
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 3px;
+            pointer-events: auto;
+        }
+
+        #sequenceControls button {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 4px 12px;
+            margin-left: 5px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        #sequenceControls button:hover {
+            background: #45a049;
+        }
+
+        #sequenceControls button:active {
+            background: #3d8b40;
+        }
+
+        #errorMsg {
+            color: #ff6666;
+            font-size: 10px;
+            margin-top: 3px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     <div id="info">
         <div>Lyapunov Fractal</div>
-        <div>Sequence: AABCAD</div>
-        <div>A range (horizontal): 1.8-4.0</div>
-        <div>B range (vertical): 1.8-4.0</div>
-        <div>Touch/Mouse Position: <span id="mousePos">Center</span></div>
-        <div>C Parameter: <span id="cParam">3.85</span></div>
-        <div>D Parameter: <span id="dParam">3.85</span></div>
-        <div id="controls" style="margin-top: 8px; opacity: 0.7;"></div>
+        <div>Sequence: <span id="currentSequence">AABCAD</span></div>
+        <div>A range (horz): 1.8-4.0</div>
+        <div>B range (vert): 1.8-4.0</div>
+        <!-- <div>Touch/Mouse Position: <span id="mousePos">Center</span></div> -->
+        <div>C (mouse x): <span id="cParam">3.85</span></div>
+        <div>D (mouse y): <span id="dParam">3.85</span></div>
+        
+        <div id="sequenceControls">
+            <div style="margin-bottom: 5px; opacity: 0.9;">Change Sequence:</div>
+            <input type="text" id="sequenceField" placeholder="e.g. ACDAB" maxlength="20" value="AABCAD">
+            <button id="goButton">GO</button>
+            <div id="errorMsg"></div>
+        </div>
+        <div id="controls" style="margin-top: 10px; opacity: 0.7;border-top: 1px solid rgba(255, 255, 255, 0.2);"></div>
     </div>
 
     <!-- Vertex Shader -->
@@ -83,7 +136,7 @@
         // Configuration
         #define SEQUENCE_LENGTH 6
         #define N_SKIP 50
-        #define N_ITERATIONS 100
+        #define N_ITERATIONS 250
         #define MIN_DERIVATIVE 1e-10
 
         // Parameter ranges
@@ -91,10 +144,10 @@
         #define A_MAX 4.0
         #define B_MIN 1.8
         #define B_MAX 4.0
-        #define C_MIN 3.7
-        #define C_MAX 4.01
-        #define D_MIN 3.7
-        #define D_MAX 4.01
+        #define C_MIN 3.8
+        #define C_MAX 4.0
+        #define D_MIN 3.8
+        #define D_MAX 4.0
 
         // Get sequence value at index (AABCAD pattern: 0,0,1,2,0,3)
         int getSequenceValue(int i) {
@@ -155,26 +208,26 @@
 
         // Get color by index
         vec3 getColor(int idx) {
-            if (idx == 0) return vec3(0.980392, 0.972549, 0.458824);  // 0xfaf875
-            else if (idx == 1) return vec3(0.988235, 0.988235, 0.149020);  // 0xfcfc26
-            else if (idx == 2) return vec3(0.737255, 0.870588, 0.149020);  // 0xbcde26
-            else if (idx == 3) return vec3(0.360784, 0.784314, 0.388235);  // 0x5CC863
-            else if (idx == 4) return vec3(0.121569, 0.627451, 0.533333);  // 0x1FA088
-            else if (idx == 5) return vec3(0.200000, 0.388235, 0.552941);  // 0x33638D
-            else if (idx == 6) return vec3(0.239216, 0.258824, 0.521569);  // 0x3D4285
-            else if (idx == 7) return vec3(0.121569, 0.007843, 0.411765);  // 0x1F0269
-            else if (idx == 8) return vec3(0.145098, 0.007843, 0.301961);  // 0x25024D
-            else if (idx == 9) return vec3(0.262745, 0.027451, 0.529412);  // 0x430787
-            else if (idx == 10) return vec3(0.435294, 0.000000, 0.658824); // 0x6F00A8
-            else if (idx == 11) return vec3(0.596078, 0.078431, 0.627451); // 0x9814A0
-            else if (idx == 12) return vec3(0.760784, 0.235294, 0.505882); // 0xC23C81
-            else if (idx == 13) return vec3(0.941176, 0.498039, 0.309804); // 0xF07F4F
-            else if (idx == 14) return vec3(0.992157, 0.698039, 0.184314); // 0xFDB22F
-            else return vec3(0.980392, 0.921569, 0.125490); // 0xFAEB20
+            if (idx == 0) return vec3(1.0, 0.0, 0.0); //vec3(0.980392, 0.972549, 0.458824);       // 0xfaf875 light yellow
+            else if (idx == 1) return vec3(0.988235, 0.988235, 0.149020);  // 0xfcfc26 mid yellow
+            else if (idx == 2) return vec3(0.737255, 0.870588, 0.149020);  // 0xbcde26 yellow green
+            else if (idx == 3) return vec3(0.360784, 0.784314, 0.388235);  // 0x5CC863 green
+            else if (idx == 4) return vec3(0.121569, 0.627451, 0.533333);  // 0x1FA088 turqoise
+            else if (idx == 5) return vec3(0.200000, 0.388235, 0.552941);  // 0x33638D sea blue
+            else if (idx == 6) return vec3(0.239216, 0.258824, 0.521569);  // 0x3D4285 purple blue
+            else if (idx == 7) return vec3(0.121569, 0.007843, 0.411765);  // 0x1F0269 purple
+            else if (idx == 8) return vec3(0.145098, 0.007843, 0.301961);  // 0x25024D dark purple
+            else if (idx == 9) return vec3(0.262745, 0.027451, 0.529412);  // 0x430787 light purple
+            else if (idx == 10) return vec3(0.435294, 0.000000, 0.658824); // 0x6F00A8 dark magenta
+            else if (idx == 11) return vec3(0.596078, 0.078431, 0.627451); // 0x9814A0 dark pink
+            else if (idx == 12) return vec3(0.760784, 0.235294, 0.505882); // 0xC23C81 pink
+            else if (idx == 13) return vec3(0.941176, 0.498039, 0.309804); // 0xF07F4F salmon
+            else if (idx == 14) return vec3(0.992157, 0.698039, 0.184314); // 0xFDB22F light orange
+            else return vec3(0.0, 0.0, 0.0);                               // #000000 black
         }
 
         // Color mapping function
-        vec3 colorMapHex(float x) {
+        vec3 colorMap16(float x) {
             const int colorCount = 16;
             x *= float(colorCount);
             int lo = int(mod(floor(x), float(colorCount)));
@@ -182,6 +235,7 @@
 
             return mix(getColor(lo), getColor(hi), fract(x));
         }
+        
 
         void main() {
             vec2 fragCoord = gl_FragCoord.xy;
@@ -206,11 +260,11 @@
             float lyap = lyapunovExponent(a, b, c, d);
 
             // Normalize the value to [0, 1] range
-            float t = clamp((lyap + 2.0) / 3.0, 0.0, 1.0);
+            float t = clamp((lyap + 2.5) / 3.0, 0.0, 0.99999);
 
             // Apply colormap
-            vec3 color = colorMapHex(t);
-
+            vec3 color = colorMap16(t);
+            //vec3 color = colorMapViridis(t);
             gl_FragColor = vec4(color, 1.0);
         }
     </script>
@@ -220,10 +274,14 @@
         // Get canvas and info elements
         const canvas = document.getElementById('canvas');
         const info = document.getElementById('info');
-        const mousePosEl = document.getElementById('mousePos');
+        //const mousePosEl = document.getElementById('mousePos');
         const cParamEl = document.getElementById('cParam');
         const dParamEl = document.getElementById('dParam');
         const controlsEl = document.getElementById('controls');
+        const currentSequenceEl = document.getElementById('currentSequence');
+        const sequenceFieldEl = document.getElementById('sequenceField');
+        const goButtonEl = document.getElementById('goButton');
+        const errorMsgEl = document.getElementById('errorMsg');
 
         // TODO: can we set these vals in the shader script.
         const C_MIN = 3.7
@@ -269,17 +327,82 @@
             return program;
         }
 
-        // Get shader sources
-        const vertexShaderSource = document.getElementById('vertex-shader').textContent;
-        const fragmentShaderSource = document.getElementById('fragment-shader').textContent;
+        // Generate fragment shader source with custom sequence
+        function generateFragmentShader(sequence) {
+            const baseShaderSource = document.getElementById('fragment-shader').textContent;
 
-        // Compile shaders
-        const vertexShader = compileShader(vertexShaderSource, gl.VERTEX_SHADER);
-        const fragmentShader = compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+            // Replace SEQUENCE_LENGTH
+            let shaderSource = baseShaderSource.replace(
+                /#define SEQUENCE_LENGTH \d+/,
+                `#define SEQUENCE_LENGTH ${sequence.length}`
+            );
 
-        // Create program
-        const program = createProgram(vertexShader, fragmentShader);
-        gl.useProgram(program);
+            // Generate getSequenceValue function with the new sequence
+            const sequenceMapping = sequence.split('').map((char, idx) => {
+                const value = char === 'A' ? 0 : char === 'B' ? 1 : char === 'C' ? 2 : 3;
+                return `if (idx == ${idx}) return ${value};`;
+            }).join('\n            else ');
+
+            const getSequenceFunctionOld = /int getSequenceValue\(int i\) \{[\s\S]*?\n        \}/;
+            const getSequenceFunctionNew = `int getSequenceValue(int i) {
+            int idx = int(mod(float(i), ${sequence.length}.0));
+            ${sequenceMapping}
+            return 0;
+        }`;
+
+            shaderSource = shaderSource.replace(getSequenceFunctionOld, getSequenceFunctionNew);
+
+            return shaderSource;
+        }
+
+        // Current program and uniform locations
+        let program;
+        let positionLocation;
+        let iResolutionLocation;
+        let iMouseLocation;
+        let iTimeLocation;
+
+        // Initialize shader program
+        function initShaderProgram(sequence) {
+            // Get shader sources
+            const vertexShaderSource = document.getElementById('vertex-shader').textContent;
+            const fragmentShaderSource = generateFragmentShader(sequence);
+
+            // Compile shaders
+            const vertexShader = compileShader(vertexShaderSource, gl.VERTEX_SHADER);
+            const fragmentShader = compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER);
+
+            if (!vertexShader || !fragmentShader) {
+                return false;
+            }
+
+            // Delete old program if it exists
+            if (program) {
+                gl.deleteProgram(program);
+            }
+
+            // Create program
+            program = createProgram(vertexShader, fragmentShader);
+            if (!program) {
+                return false;
+            }
+
+            gl.useProgram(program);
+
+            // Get attribute and uniform locations
+            positionLocation = gl.getAttribLocation(program, 'a_position');
+            iResolutionLocation = gl.getUniformLocation(program, 'iResolution');
+            iMouseLocation = gl.getUniformLocation(program, 'iMouse');
+            iTimeLocation = gl.getUniformLocation(program, 'iTime');
+
+            return true;
+        }
+
+        // Initialize with default sequence
+        if (!initShaderProgram('AABCAD')) {
+            alert('Failed to initialize shader program');
+            throw new Error('Shader initialization failed');
+        }
 
         // Create full-screen quad
         const positions = new Float32Array([
@@ -293,14 +416,8 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
-        const positionLocation = gl.getAttribLocation(program, 'a_position');
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-        // Get uniform locations
-        const iResolutionLocation = gl.getUniformLocation(program, 'iResolution');
-        const iMouseLocation = gl.getUniformLocation(program, 'iMouse');
-        const iTimeLocation = gl.getUniformLocation(program, 'iTime');
 
         // Mouse/Touch state
         let mouse = { x: -1, y: -1, clickX: 0, clickY: 0 };
@@ -340,7 +457,7 @@
             const c = C_MIN + mouseUV.x * (C_MAX - C_MIN);
             const d = D_MIN + mouseUV.y * (D_MAX - D_MIN);
 
-            mousePosEl.textContent = `(${Math.round(mouse.x)}, ${Math.round(canvas.height - mouse.y)})`;
+            //mousePosEl.textContent = `(${Math.round(mouse.x)}, ${Math.round(canvas.height - mouse.y)})`;
             cParamEl.textContent = c.toFixed(4);
             dParamEl.textContent = d.toFixed(4);
 
@@ -441,6 +558,51 @@
             mousePressed = false;
         }, { passive: false });
 
+        // Sequence change handler
+        function changeSequence() {
+            const newSequence = sequenceFieldEl.value.toUpperCase().trim();
+
+            // Validate sequence
+            if (newSequence.length === 0) {
+                errorMsgEl.textContent = 'Sequence cannot be empty';
+                errorMsgEl.style.display = 'block';
+                return;
+            }
+
+            if (!/^[ABCD]+$/.test(newSequence)) {
+                errorMsgEl.textContent = 'Only A, B, C, D allowed';
+                errorMsgEl.style.display = 'block';
+                return;
+            }
+
+            // Hide error
+            errorMsgEl.style.display = 'none';
+
+            // Reinitialize shader with new sequence
+            if (initShaderProgram(newSequence)) {
+                // Update display
+                currentSequenceEl.textContent = newSequence;
+                sequenceFieldEl.value = newSequence;
+
+                // Rebind buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.enableVertexAttribArray(positionLocation);
+                gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+                console.log('Shader recompiled with sequence:', newSequence);
+            } else {
+                errorMsgEl.textContent = 'Failed to compile shader';
+                errorMsgEl.style.display = 'block';
+            }
+        }
+
+        goButtonEl.addEventListener('click', changeSequence);
+        sequenceFieldEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                changeSequence();
+            }
+        });
+
         // Keyboard handler for hiding/showing info and fullscreen
         document.addEventListener('keydown', (e) => {
             if (e.key === 'h' || e.key === 'H') {
@@ -500,4 +662,5 @@
     </script>
 </body>
 </html>
+
 
