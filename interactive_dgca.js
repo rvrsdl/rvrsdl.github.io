@@ -172,21 +172,21 @@ const layoutOptions = {
     // Whether to pack disconnected components - cytoscape-layout-utilities extension should be registered and initialized
     packComponents: true,
     // False for random, true for greedy sampling
-    samplingType: false,
+    samplingType: true,
     // Sample size to construct distance matrix
     sampleSize: 25,
     // Separation amount between nodes
-    nodeSeparation: 75,
+    nodeSeparation: 50,
     // Power iteration tolerancetrue
     piTol: 0.0000001,
     // Node repulsion (non overlapping) multiplier
-    nodeRepulsion: node => 4500,
+    nodeRepulsion: node => 2000,
     // Ideal edge (non nested) length
     idealEdgeLength: edge => 50,
     // Divisor to compute edge forces
     edgeElasticity: edge => 0.45,
     // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
-    numIter: 2500,
+    numIter: 200,
 };
 
 
@@ -307,7 +307,8 @@ function initCytoscape() {
         container: document.getElementById('cy'),
         elements: seed_graph_copy,
         style: cy_style,
-        layout: layoutOptions
+        layout: layoutOptions,
+        wheelSensitivity: 0.1, // Default is 1.0, lower = slower zoom
     });
     cyx.data('prev', cyx.json());
     // reset info
@@ -823,6 +824,11 @@ function stepForward() {
     //node_count_info.innerHTML = cy.nodes().length;
     //component_count_info.innerHTML = cy.elements().components().length; // This is v slow (takes 15% of time), so prob don't want to call it every step
     cy.$('.component-selected').removeClass('component-selected');
+    // turn off animation is graph is above 1000 nodes
+    if (cy.nodes().length > 1000) { 
+        layoutOptions.animate = false; 
+        anim_layout_checkbox.checked = false; 
+    }
 }
 
 function stepBack() {
